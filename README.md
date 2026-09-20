@@ -19,25 +19,24 @@ The corpus spans ~10+ years of amendments. Individual schemes have
 deep temporal chains where later guidelines supersede earlier ones,
 and many questions are multi-hop and cross-document — *"what was the
 subsidy rate for a rotavator in 2018 vs 2025?"* cannot be answered
-from any single PDF. Every answer must cite its source; an unsourced
-answer is worthless in a scheme-eligibility context.
+from any single PDF. Answers are required to cite supporting source
+documents.
 
-## Architecture: two layers (V1)
+## Architecture
 
-`scope.md` §3 lays out a three-layer design; V1 ships two of them.
-
-1. **Structured eligibility layer.** Deterministic filter over farmer
-   attributes → list of schemes that are *potentially applicable*. No
-   LLM on the routing path. Rules live in
+1. **Structured scheme-discovery layer.** Deterministic filter over
+   farmer attributes → list of schemes that are *potentially
+   applicable*. No LLM on the routing path. Rules live in
    [`data/scheme_eligibility.json`](data/scheme_eligibility.json)
    with per-rule provenance — every applicability / disqualifying /
    boost rule carries `{filename, page, note}` so the structured layer
    is as citable as the RAG layer. Language contract: says *"potentially
    applicable"*, never *"eligible"*.
 
-2. **RAG layer.** Retrieval over authoritative prose — definitions,
-   conditions, exceptions, cross-provision interactions, "what changed
-   in 2018", "which document supersedes this rule". Pipeline:
+2. **RAG layer.** Retrieval over authoritative source material —
+   definitions, conditions, exceptions, cross-provision interactions,
+   "what changed in 2018", "which document supersedes this rule".
+   Pipeline:
 
    ```
    query
@@ -47,12 +46,13 @@ answer is worthless in a scheme-eligibility context.
      → grounded generation with citations
    ```
 
-3. *(Workflow layer, deferred.)* Portal SOP CSVs live under
-   `data/raw/[SCHEME]/02_Workflows/` and were the planned third layer.
-   Deferred to V2 because the eval showed RAG handles the
-   `simple_procedural` category at hit@5=0.92 without it — a
-   deterministic router would duplicate what's working. Full reasoning
-   in `DECISIONS.md`.
+Curated workflow / procedural CSVs under
+`data/raw/[SCHEME]/02_Workflows/` are treated as source material
+alongside the scheme PDFs — they are chunked, embedded, and indexed
+into the same corpus. Procedural questions ("how do I do e-KYC on
+the PM-KISAN portal?") are therefore answered by the same
+retrieval → RRF → cross-encoder → confidence gate → grounded
+generation pipeline as definitional and interpretive questions.
 
 ## The ablation table
 
@@ -185,8 +185,6 @@ real gain.
 │   ├── run_eval.py                         # golden run + RAGAS + retrieval metrics
 │   └── results/                            # per-run artefacts (jsonl + summary)
 ├── scope.md          # authoritative scope document (V1.1)
-├── CLAUDE.md         # project brief and collaboration rules
-├── DECISIONS.md      # design log — one entry per real choice
 └── README.md         # this file
 ```
 
