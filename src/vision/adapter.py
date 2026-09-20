@@ -385,9 +385,9 @@ class GeminiVisionAdapter:
 def make_adapter(config=settings) -> VisionAdapter:
     """
     Resolve `settings.vision_provider` to a concrete adapter. Single
-    swap point — if we add e.g. a Claude vision adapter later, it lands
-    here and everything downstream picks up the change through this
-    factory.
+    swap point — if we add an alternative vision provider later, it
+    lands here and everything downstream picks up the change through
+    this factory.
     """
     provider = (config.vision_provider or "").lower()
     if provider == "gemini":

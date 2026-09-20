@@ -279,8 +279,7 @@ def generate(
     Produce a grounded, cited answer for `query` using `retrieved_chunks`.
 
     The generator does NOT retrieve. Wiring retriever → generator is
-    the caller's job (see `scripts/run_generator_check.py` for the
-    baseline wiring).
+    the caller's job.
     """
     client = _load_groq_client(config)
     system_prompt = _build_system_prompt(config)

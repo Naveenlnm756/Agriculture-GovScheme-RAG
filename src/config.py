@@ -234,6 +234,15 @@ class Settings(BaseSettings):
     # `agri_schemes_rag` collection so re-running the ablation stays
     # reproducible (held-constant ablation rule).
     production_collection_name: str = "agri_schemes_prod"
+    # On-disk persist dir for the production Chroma store. Kept separate
+    # from `chroma_persist_dir` (which points at the ablation-anchor
+    # store under `data/chroma_db/`) because the prod collection was
+    # built by `scripts/build_prod_collection.py` into `data/chroma_prod/`.
+    # In deployment this is overridden by `CHROMA_PERSIST_DIR=/data/chroma_prod`
+    # via the API startup, which mutates `chroma_persist_dir` directly;
+    # the eval harness reads THIS field so the same routing works
+    # locally without needing an env-var swap.
+    production_persist_dir: Path = PROJECT_ROOT / "data" / "chroma_prod"
 
     # Phase 5, fix #1 (ablation methodology). When True, PDFs are chunked
     # with the pymupdf-based structure-aware pass:

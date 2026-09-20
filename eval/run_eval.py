@@ -15,7 +15,7 @@ USAGE
     python eval/run_eval.py --pipeline_mode hybrid           # implemented (Phase 5 fix #2)
     python eval/run_eval.py --pipeline_mode query_transform  # implemented (Phase 5 fix #3)
     python eval/run_eval.py --pipeline_mode crag             # NotImplementedError
-    python eval/run_eval.py --pipeline_mode full             # NotImplementedError
+    python eval/run_eval.py --pipeline_mode full             # implemented (headline row: multimodal + hybrid RRF + reranker)
 
     # Tune pacing (default 3s; raise if you hit 429s, lower if the run
     # is running way under the 8k TPM Groq cap):
@@ -382,6 +382,49 @@ def _run_pipeline_query_transform(
     return fused_chunks, gen_result
 
 
+def _run_pipeline_full(
+    question: str,
+    eval_client: EvalGroqClient,
+    config=settings,
+) -> tuple[list[RetrievalResult], Any]:
+    """
+    Full pipeline (headline row): hybrid retrieval (semantic + BM25, RRF
+    fused) → cross-encoder rerank → grounded generation.
+
+    Same composition order as `src.production.pipeline.run_production_query`
+    — this is the stack the shipped API runs. The single deviation from
+    production is the generator dispatch: this function goes through
+    `eval_client.generate_answer` (rotating key pool) instead of the
+    production `generate()` singleton, so a 78-question run stays under
+    the Groq 8k TPM cap. The pipeline UNDER STUDY (retrieval + rerank
+    selection) is byte-identical.
+
+    Reads from `agri_schemes_prod` — the multimodal collection that
+    contains text + table + image chunks. Collection swap happens at
+    `run_eval()` startup for this mode only, so all other rows still
+    read from the frozen `agri_schemes_rag` ablation anchor.
+
+    Retrieval-metric semantics match the other fusion rows: this mode
+    returns `reranker_top_k` chunks (default 5), so hit_rate_at_10
+    collapses to hit_rate_at_5 — only 5 items exist to inspect. Same
+    degeneracy as `reranked` and `hybrid`. The baseline row retains
+    the meaningful hit_rate_at_10 for cross-row comparison.
+    """
+    fused_pool = hybrid_search(
+        query=question,
+        top_k=config.reranker_top_n,
+        config=config,
+    )
+    reranked_chunks = rerank(
+        query=question,
+        candidates=fused_pool,
+        top_k=config.reranker_top_k,
+        config=config,
+    )
+    gen_result = eval_client.generate_answer(question, reranked_chunks)
+    return reranked_chunks, gen_result
+
+
 def _run_pipeline_for_mode(
     pipeline_mode: str,
     question: str,
@@ -391,18 +434,12 @@ def _run_pipeline_for_mode(
     """
     Route to the right pipeline mode. Phase 5 modes are added one at a time.
 
-    Currently implemented: `baseline`, `reranked`, `hybrid`.
-    The remaining modes (`query_transform`, `crag`, `full`) are
-    explicit stubs so the CLI structure is ready — you can read
-    `python eval/run_eval.py --help` and see every mode the ablation
-    table will eventually cover. They raise NotImplementedError rather
-    than silently returning baseline results, because a silent fallback
-    would mean an ablation row labelled `hybrid` that was actually the
-    baseline number, and the whole table would be a lie.
+    Currently implemented: `baseline`, `reranked`, `hybrid`,
+    `query_transform`, `full`. `crag` remains a stub.
 
     Isolated methodology reminder: each mode applies ONE technique on
     top of the baseline, NOT stacked on previous techniques. Only
-    `full` combines everything (implemented last).
+    `full` combines everything (headline row that mirrors production).
     """
     if pipeline_mode == "baseline":
         return _run_pipeline_baseline(question, eval_client, config)
@@ -412,11 +449,11 @@ def _run_pipeline_for_mode(
         return _run_pipeline_hybrid(question, eval_client, config)
     if pipeline_mode == "query_transform":
         return _run_pipeline_query_transform(question, eval_client, config)
-    if pipeline_mode in {"crag", "full"}:
+    if pipeline_mode == "full":
+        return _run_pipeline_full(question, eval_client, config)
+    if pipeline_mode == "crag":
         raise NotImplementedError(
-            f"pipeline_mode={pipeline_mode!r} is not yet implemented in "
-            "Phase 5. Order: reranked → hybrid → query_transform → crag "
-            "→ chunking → full."
+            f"pipeline_mode={pipeline_mode!r} is not yet implemented."
         )
     raise ValueError(f"Unknown pipeline_mode {pipeline_mode!r}")
 
@@ -1385,6 +1422,34 @@ def run_eval(args: argparse.Namespace) -> EvalSummary:
     logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
     logging.getLogger("chromadb").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
+
+    # --- Collection routing --------------------------------------------
+    # Every Phase-5 ablation row reads from the frozen `agri_schemes_rag`
+    # anchor collection (text-only). The `full` row is the exception: it
+    # is the headline number that mirrors the shipped production stack,
+    # so it must read from the multimodal `agri_schemes_prod` collection
+    # (text + table + image chunks). Swap is done BEFORE any retriever
+    # module is called — retriever / bm25 / reranker cache a chromadb
+    # PersistentClient on first use and pin the collection name at that
+    # point, so a later mutation would be a no-op (see retriever.py
+    # comment). Kept SCOPED to `full` mode so the other ablation rows
+    # stay reproducible against the anchor collection.
+    if args.pipeline_mode == "full":
+        prod_collection = settings.production_collection_name
+        anchor_collection = settings.chroma_collection_name
+        prod_persist = settings.production_persist_dir
+        anchor_persist = settings.chroma_persist_dir
+        print(
+            f"[collection] pipeline_mode=full → switching collection "
+            f"{anchor_collection!r} → {prod_collection!r} "
+            f"(multimodal prod stack)"
+        )
+        print(
+            f"[collection] persist dir "
+            f"{anchor_persist} → {prod_persist}"
+        )
+        settings.chroma_collection_name = prod_collection
+        settings.chroma_persist_dir = prod_persist
 
     n = 0 if args.full else args.n_questions
     questions = _load_golden_set(settings.eval_golden_set_path, n)

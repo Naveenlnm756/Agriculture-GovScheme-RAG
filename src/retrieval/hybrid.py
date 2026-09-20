@@ -147,8 +147,7 @@ def hybrid_search(
     # the same Chroma record for the same chunk_id, so their
     # metadata is identical — but preserving the same ordering
     # keeps this refactor bit-identical against the pre-extraction
-    # hybrid_search behaviour, which the equivalence check in
-    # scripts/hybrid_equivalence_check.py verifies.
+    # hybrid_search behaviour.
     fused = rrf_fuse(
         ranked_lists=[semantic_hits, bm25_hits],
         top_k=top_k,
