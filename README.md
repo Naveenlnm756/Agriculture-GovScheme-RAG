@@ -238,7 +238,5 @@ Each run writes to `eval/results/{timestamp}_{mode}_n{count}/`:
 
 - [`scope.md`](scope.md) — authoritative V1 scope: what's in, what's
   out, known limitations, why the corpus is chosen the way it is.
-- [`CLAUDE.md`](CLAUDE.md) — project brief and collaboration rules
-  (build order, ablation-integrity rules, provider locks).
 - [`DECISIONS.md`](DECISIONS.md) — running design log. One entry per
   real choice, with the measured effect where applicable.
