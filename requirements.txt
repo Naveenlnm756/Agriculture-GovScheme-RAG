@@ -1,0 +1,54 @@
+# --- API layer ---
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+# starlette pin: fastapi 0.115 requires <0.39; streamlit 1.64 asks for
+# >=0.46 as a warning-only dep (its own server is tornado-based, so
+# starlette 0.38.6 works for both at runtime). 2026-09-20.
+starlette<0.39
+# --- Frontend (demo) ---
+# Streamlit UI at app.py, hits the FastAPI /query endpoint over HTTP.
+# Pin to the 1.x series; 2.x may be a rewrite.
+streamlit>=1.30,<2
+
+# --- Config / data models ---
+pydantic==2.9.2
+pydantic-settings==2.5.2
+python-dotenv==1.0.1
+
+# --- Retrieval ---
+chromadb==0.5.5
+sentence-transformers==3.0.1
+rank-bm25==0.2.2
+
+# --- PDF ingestion ---
+pypdf==5.0.1
+# ocrmypdf wraps Tesseract to produce a searchable text-layer PDF for
+# scanned documents (priority-OCR list, scope.md §8). Requires a system
+# install of Tesseract with the English + Hindi language packs.
+ocrmypdf==16.5.0
+# pikepdf<10 pin — ocrmypdf 16.5.0 was released for pikepdf 9.x and
+# calls `Pdf.check()`, which pikepdf 10 removed. Without this pin, a
+# fresh venv resolves pikepdf 10.x transitively and every ocrmypdf
+# invocation dies with `AttributeError: 'Pdf' object has no attribute
+# 'check'`. Confirmed against pikepdf 10.13 on 2026-09-16.
+pikepdf<10
+
+# --- Evaluation ---
+ragas==0.2.0
+# Independent RAGAS judge (CLAUDE.md §11 rule 1: judge model must be
+# independent of the generation model). Current default judge is
+# Mistral Small v26.03 (`mistral-small-2603`) via Mistral's own API —
+# see src/config.py `judge_provider`. Groq, Gemini, and Ollama
+# wrappers remain wired in eval/run_eval.py as fallbacks.
+#
+# Version pins are important: langchain-ollama 1.x pulls in
+# langchain-core 1.x, which breaks langchain-mistralai==0.2.0 and
+# langchain-openai==0.3.35. Pinning langchain-ollama to the 0.3.x
+# line keeps everything on langchain-core 0.3.x.
+langchain-ollama==0.3.10
+langchain-mistralai==0.2.0
+
+# --- LLM client ---
+# Provider is Groq (see CLAUDE.md §11 and DECISIONS.md — Phase 0).
+# Model is chosen in src/config.py so provider swaps stay one file.
+groq==1.7.0

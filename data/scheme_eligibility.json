@@ -1,0 +1,494 @@
+{
+  "_meta": {
+    "schema_version": "2.0",
+    "authored_by": "initial draft from corpus knowledge — REQUIRES OWNER REVIEW",
+    "last_updated": "2026-09-20",
+    "notes": [
+      "Schema v2 change: every rule (include_if / exclude_if / match_boost_if) carries its OWN source (filename, page, note) so the structured layer is auditable at the criterion level.",
+      "`applicability_rules` (renamed from `include_if`) — every rule must be satisfied by the user's attributes for the scheme to be POTENTIALLY APPLICABLE. Missing user attributes (value == 'unknown') do not fail rules — they are noted in `missing_information` instead.",
+      "`disqualifying_rules` — if ANY rule fires against explicit user attributes, the scheme is dropped. Missing user attributes do NOT disqualify.",
+      "`match_boost_if` — soft signals that raise a scheme in the ranking without gating inclusion.",
+      "`required_information` — attributes the user MUST provide before a definitive eligibility judgement is possible. Missing entries are surfaced to the user as 'we still need to know X'.",
+      "`always_include` — for schemes that apply to essentially every farmer (PM-KISAN, KCC, PMFBY). Included when the user gave no explicit attributes at all.",
+      "Language contract: this file NEVER states 'the farmer is eligible'. Downstream code renders 'potentially applicable based on what you told me' and lists both provided_information and missing_information.",
+      "Owner: edit any factual line here and the discovery layer reflects it on next restart. No re-embed needed."
+    ]
+  },
+
+  "schemes": [
+    {
+      "code": "PM_KISAN",
+      "name": "PM-KISAN",
+      "long_name": "Pradhan Mantri Kisan Samman Nidhi",
+      "category": "Income Support",
+      "one_liner": "Direct income support of ₹6,000 per year to all landholding farmer families, paid in three ₹2,000 installments.",
+      "always_include": true,
+      "applicability_rules": [
+        {
+          "attribute": "has_land",
+          "values": [true, "unknown"],
+          "source": {
+            "filename": "RevisedFAQ.pdf",
+            "page": 1,
+            "note": "Landholding farmer families are eligible for PM-KISAN."
+          }
+        }
+      ],
+      "disqualifying_rules": [
+        {
+          "attribute": "is_income_tax_payer",
+          "values": [true],
+          "source": {
+            "filename": "RevisedFAQ.pdf",
+            "page": 4,
+            "note": "Income tax payers in the last assessment year are excluded."
+          }
+        },
+        {
+          "attribute": "is_govt_employee_group_a_b",
+          "values": [true],
+          "source": {
+            "filename": "RevisedFAQ.pdf",
+            "page": 4,
+            "note": "Serving / retired Group A & B govt employees are excluded."
+          }
+        }
+      ],
+      "match_boost_if": [],
+      "required_information": [
+        {
+          "attribute": "has_land",
+          "why_needed": "PM-KISAN applies to landholding farmer families — we need to know that the user owns cultivable land."
+        },
+        {
+          "attribute": "is_income_tax_payer",
+          "why_needed": "Farmer families paying income tax in the last AY are excluded."
+        },
+        {
+          "attribute": "is_govt_employee_group_a_b",
+          "why_needed": "Serving / retired Group A & B govt employees are excluded."
+        }
+      ],
+      "key_benefits": [
+        "₹6,000 per year direct benefit transfer to the farmer family",
+        "Paid in three equal installments of ₹2,000 every four months",
+        "Aadhaar-seeded direct bank transfer"
+      ],
+      "who_should_apply": "Landholding farmer families whose cultivable land is in their name — subject to standard exclusions for income tax payers, Group A/B govt employees, and professionals.",
+      "how_to_register": {
+        "portal": "pmkisan.gov.in",
+        "workflow_id_hint": "pmkisan_new_registration",
+        "in_person": "Local Common Service Centre (CSC) or State Nodal Officer"
+      },
+      "follow_up_query_hint": "How do I register on the PM-KISAN portal?",
+      "authoritative_source": {
+        "filename": "RevisedFAQ.pdf",
+        "page": 1,
+        "note": "PM-KISAN Revised FAQs — eligibility overview."
+      }
+    },
+
+    {
+      "code": "PMFBY",
+      "name": "PMFBY",
+      "long_name": "Pradhan Mantri Fasal Bima Yojana",
+      "category": "Crop Insurance",
+      "one_liner": "Crop insurance covering yield losses from natural calamities, pests, and disease. Farmer premium share is capped low; the balance is paid by centre and state.",
+      "always_include": true,
+      "applicability_rules": [
+        {
+          "attribute": "crop_group",
+          "values": [
+            "food_grains", "rice", "wheat", "pulses", "coarse_cereals",
+            "nutri_cereals", "oilseeds", "horticulture", "commercial",
+            "fruit", "vegetable", "unknown"
+          ],
+          "source": {
+            "filename": "operational_guidelines_pmfby.pdf",
+            "page": 11,
+            "note": "PMFBY covers all food & oilseed crops and annual commercial/horticultural crops for which past yield data are available."
+          }
+        }
+      ],
+      "disqualifying_rules": [],
+      "match_boost_if": [],
+      "required_information": [
+        {
+          "attribute": "crop_group",
+          "why_needed": "PMFBY covers notified crops only — we need to know what the user grows to confirm the crop is notified in their district."
+        },
+        {
+          "attribute": "is_loanee_farmer",
+          "why_needed": "Enrolment is compulsory for loanee (SAO/KCC) farmers and voluntary for non-loanee farmers; the process differs."
+        },
+        {
+          "attribute": "region",
+          "why_needed": "Some crops are notified only in specific states — geography matters for PMFBY."
+        }
+      ],
+      "key_benefits": [
+        "Farmer premium share: 2% for Kharif food-grain and oilseed crops",
+        "Farmer premium share: 1.5% for Rabi food-grain and oilseed crops",
+        "Farmer premium share: 5% for annual commercial/horticultural crops",
+        "Mandatory for loanee farmers (SAO/KCC borrowers); voluntary for non-loanee farmers",
+        "Covers all food & oilseed crops and annual commercial/horticultural crops"
+      ],
+      "who_should_apply": "Loanee farmers (auto-enrolled through banks) and non-loanee farmers with insurable interest in notified crops in their district.",
+      "how_to_register": {
+        "portal": "pmfby.gov.in",
+        "workflow_id_hint": "pmfby_new_enrolment",
+        "in_person": "Nearest bank branch, CSC, or Insurance company representative"
+      },
+      "follow_up_query_hint": "What crops are covered under PMFBY and how do I enroll?",
+      "authoritative_source": {
+        "filename": "operational_guidelines_pmfby.pdf",
+        "page": 15,
+        "note": "PMFBY Operational Guidelines 2023 — enrolment and premium sharing."
+      }
+    },
+
+    {
+      "code": "KCC",
+      "name": "KCC",
+      "long_name": "Kisan Credit Card",
+      "category": "Agricultural Credit",
+      "one_liner": "Short-term crop loan and working capital credit for farmers at an interest-subvented rate (4% effective after prompt repayment).",
+      "always_include": true,
+      "applicability_rules": [
+        {
+          "attribute": "occupation",
+          "values": ["farmer", "unknown"],
+          "source": {
+            "filename": "RBI_KCC_Master_Circular_2017.pdf.pdf",
+            "page": 1,
+            "note": "KCC is available to all farmers — individual/joint borrowers who are owner cultivators, tenant farmers, oral lessees, sharecroppers, SHGs / JLGs of farmers."
+          }
+        }
+      ],
+      "disqualifying_rules": [],
+      "match_boost_if": [
+        {
+          "attribute": "interests",
+          "values": ["credit", "insurance"],
+          "source": {
+            "filename": "RBI_KCC_Master_Circular_2017.pdf.pdf",
+            "page": 1,
+            "note": "KCC boost when user explicitly asks for credit / loan / KCC / insurance."
+          }
+        }
+      ],
+      "required_information": [
+        {
+          "attribute": "occupation",
+          "why_needed": "The user should be a farmer (owner cultivator, tenant, oral lessee, sharecropper, or member of an SHG / JLG of farmers)."
+        },
+        {
+          "attribute": "crop_group",
+          "why_needed": "Loan limit is computed on scale of finance × cropped area × crop-specific rate — the crop determines the eligible loan amount."
+        }
+      ],
+      "key_benefits": [
+        "Interest subvention: 2% below the base rate; additional 3% subvention on prompt repayment (effective 4%)",
+        "Short-term crop loan under interest-subvention up to ₹3 lakh",
+        "Covers crop production, allied activities (dairy, fisheries), and post-harvest expenses",
+        "Also available for animal husbandry, dairy, and fisheries via AHDF-KCC"
+      ],
+      "who_should_apply": "All farmers — owner cultivators, tenant farmers, oral lessees, sharecroppers; SHGs / JLGs of farmers; animal-husbandry, dairy and fisheries operators (via AHDF-KCC).",
+      "how_to_register": {
+        "portal": "Any Commercial Bank / Regional Rural Bank / Cooperative Bank branch",
+        "workflow_id_hint": "kcc_new_application",
+        "in_person": "Nearest bank branch — no separate portal required in most cases"
+      },
+      "follow_up_query_hint": "How do I apply for a Kisan Credit Card at a bank?",
+      "authoritative_source": {
+        "filename": "RBI_KCC_Master_Circular_2017.pdf.pdf",
+        "page": 1,
+        "note": "RBI KCC Master Circular — eligibility and scheme parameters."
+      }
+    },
+
+    {
+      "code": "SMAM",
+      "name": "SMAM",
+      "long_name": "Sub-Mission on Agricultural Mechanization",
+      "category": "Farm Mechanization",
+      "one_liner": "Subsidy on the purchase of farm machinery and equipment (rotavators, tractors, Custom Hiring Centres, etc.); enhanced rate for SC/ST, women, small/marginal farmers, and NE-state beneficiaries.",
+      "always_include": false,
+      "applicability_rules": [
+        {
+          "attribute": "interests",
+          "values": [
+            "equipment", "mechanization", "custom_hiring", "unknown"
+          ],
+          "source": {
+            "filename": "SMAM_Operational_Guidelines_2016_17_OCR.pdf",
+            "page": 1,
+            "note": "SMAM targets adoption of farm mechanization and creation of Custom Hiring Centres / Farm Machinery Banks."
+          }
+        }
+      ],
+      "disqualifying_rules": [],
+      "match_boost_if": [
+        {
+          "attribute": "category",
+          "values": ["SC", "ST", "OBC"],
+          "source": {
+            "filename": "SMAM_Operational_Guidelines_2016_17_OCR.pdf",
+            "page": 33,
+            "note": "Enhanced subsidy rates for SC/ST/OBC beneficiaries."
+          }
+        },
+        {
+          "attribute": "land_holding",
+          "values": ["marginal", "small"],
+          "source": {
+            "filename": "SMAM_Operational_Guidelines_2016_17_OCR.pdf",
+            "page": 33,
+            "note": "Enhanced subsidy for small and marginal farmers."
+          }
+        },
+        {
+          "attribute": "gender",
+          "values": ["woman"],
+          "source": {
+            "filename": "SMAM_Operational_Guidelines_2016_17_OCR.pdf",
+            "page": 33,
+            "note": "Enhanced subsidy for women beneficiaries."
+          }
+        },
+        {
+          "attribute": "region",
+          "values": ["north_east"],
+          "source": {
+            "filename": "SMAM_Operational_Guidelines_2016_17_OCR.pdf",
+            "page": 33,
+            "note": "Enhanced subsidy for NE-state beneficiaries."
+          }
+        }
+      ],
+      "required_information": [
+        {
+          "attribute": "interests",
+          "why_needed": "SMAM subsidises specific machinery / CHC components — we need to know what the user wants to buy."
+        },
+        {
+          "attribute": "category",
+          "why_needed": "General category (up to 40%) vs SC/ST/small/women/NE (up to 50%) — subsidy % depends on this."
+        },
+        {
+          "attribute": "land_holding",
+          "why_needed": "Small/marginal farmers get the enhanced rate."
+        }
+      ],
+      "key_benefits": [
+        "Enhanced subsidy for SC/ST, women, small/marginal farmers, NE-state beneficiaries",
+        "General category: up to 40% of implement cost; enhanced: up to 50%",
+        "Establishment of Custom Hiring Centres (CHCs), Farm Machinery Banks (FMBs), and Hi-Tech Hubs",
+        "Covers a wide catalog: rotavators, tractors (up to specified HP), sprayers, harvesters, threshers, etc."
+      ],
+      "who_should_apply": "Individual farmers wanting to buy farm implements at subsidised rates; FPOs, Cooperatives, SHGs wanting to run CHCs / FMBs.",
+      "how_to_register": {
+        "portal": "agrimachinery.nic.in (DBT Agriculture Mechanization Portal)",
+        "workflow_id_hint": "smam_single_implement_subsidy",
+        "in_person": "State Nodal Officer / District Agri Office"
+      },
+      "follow_up_query_hint": "How do I apply for a single-implement subsidy under SMAM?",
+      "authoritative_source": {
+        "filename": "SMAM_Operational_Guidelines_2016_17_OCR.pdf",
+        "page": 1,
+        "note": "SMAM Operational Guidelines — beneficiary categories and subsidy patterns."
+      }
+    },
+
+    {
+      "code": "MIDH",
+      "name": "MIDH",
+      "long_name": "Mission for Integrated Development of Horticulture",
+      "category": "Horticulture Development",
+      "one_liner": "Financial assistance for horticulture: nurseries, protected cultivation (shade-net / poly-house), cold storage, post-harvest management, and organic certification.",
+      "always_include": false,
+      "applicability_rules": [
+        {
+          "attribute": "crop_group",
+          "values": [
+            "horticulture", "fruit", "vegetable", "flower", "spice",
+            "medicinal", "unknown"
+          ],
+          "source": {
+            "filename": "MIDH_Operational_Guideline_2025_OCR.pdf",
+            "page": 1,
+            "note": "MIDH targets horticultural crops — fruits, vegetables, flowers, spices, medicinal & aromatic plants."
+          }
+        }
+      ],
+      "disqualifying_rules": [],
+      "match_boost_if": [
+        {
+          "attribute": "region",
+          "values": ["north_east", "himalayan"],
+          "source": {
+            "filename": "NCCD_ENGINEERING_GUIDELINES_2025.pdf",
+            "page": 31,
+            "note": "HMNEH sub-scheme covers all states in NE and Himalayan Region with enhanced pattern."
+          }
+        },
+        {
+          "attribute": "interests",
+          "values": ["cold_storage", "post_harvest", "processing"],
+          "source": {
+            "filename": "MIDH_Operational_Guideline_2025_OCR.pdf",
+            "page": 1,
+            "note": "MIDH covers cold storage, pack-houses, and post-harvest management."
+          }
+        }
+      ],
+      "required_information": [
+        {
+          "attribute": "crop_group",
+          "why_needed": "MIDH applies to horticultural crops — we need to know the user is a horticulture farmer or planning a horticulture project."
+        },
+        {
+          "attribute": "region",
+          "why_needed": "HMNEH targets NE + Himalayan states with enhanced patterns; plains fall under NHM."
+        },
+        {
+          "attribute": "interests",
+          "why_needed": "MIDH sub-schemes fund different components — nurseries, protected cultivation, cold storage, organic certification — which one applies?"
+        }
+      ],
+      "key_benefits": [
+        "Subsidy on shade-net houses, poly-houses, tissue-culture plantlets",
+        "Cold storage and pack-house support",
+        "Enhanced rates for NE and Himalayan states under HMNEH sub-scheme",
+        "Sub-schemes: NHM, HMNEH, NHB, CDB, CIH each targeting different beneficiary sets"
+      ],
+      "who_should_apply": "Horticulture farmers, FPOs, and agri-entrepreneurs across sub-schemes: NHM (plains), HMNEH (NE + Himalayan), NHB (commercial horticulture), CDB (coconut), CIH (NE HRD).",
+      "how_to_register": {
+        "portal": "midh.gov.in / State Horticulture Mission",
+        "workflow_id_hint": "midh_nhb_subsidy_claim",
+        "in_person": "State Horticulture Mission Office or NHB (for commercial projects)"
+      },
+      "follow_up_query_hint": "What subsidy rate does MIDH provide for a shade-net house?",
+      "authoritative_source": {
+        "filename": "MIDH_Operational_Guideline_2025_OCR.pdf",
+        "page": 1,
+        "note": "MIDH Operational Guidelines 2025 — sub-schemes and target groups."
+      }
+    },
+
+    {
+      "code": "NFSM",
+      "name": "NFSM",
+      "long_name": "National Food Security Mission (renamed to NFSNM in 2024-25)",
+      "category": "Crop Productivity / Food Security",
+      "one_liner": "Increases production of rice, wheat, pulses, coarse cereals, nutri-cereals and oilseeds via integrated area demonstrations, seed distribution, and mechanization support.",
+      "always_include": false,
+      "applicability_rules": [
+        {
+          "attribute": "crop_group",
+          "values": [
+            "food_grains", "rice", "wheat", "pulses", "coarse_cereals",
+            "nutri_cereals", "oilseeds", "sugarcane", "unknown"
+          ],
+          "source": {
+            "filename": "NFSM renamed NFSNM_OCR.pdf",
+            "page": 1,
+            "note": "NFSM (now NFSNM) targets rice, wheat, pulses, coarse cereals, nutri-cereals and oilseeds; NMEO adds oil palm."
+          }
+        }
+      ],
+      "disqualifying_rules": [],
+      "match_boost_if": [],
+      "required_information": [
+        {
+          "attribute": "crop_group",
+          "why_needed": "NFSM assistance is per-crop — we need to know which of the target crops the user grows."
+        },
+        {
+          "attribute": "region",
+          "why_needed": "State-specific cluster demonstrations — availability depends on the user's state."
+        }
+      ],
+      "key_benefits": [
+        "Assistance for improved seeds (foundation, certified), integrated nutrient/pest management, and farm mechanization",
+        "Cluster-based demonstrations on rice, wheat, pulses, coarse cereals, nutri-cereals, and oilseeds",
+        "Renamed to NFSNM in 2024-25 with added focus on nutri-cereals and oil palm (via NMEO)"
+      ],
+      "who_should_apply": "Farmers growing rice / wheat / pulses / coarse cereals / oilseeds / nutri-cereals in states covered by the mission for that crop.",
+      "how_to_register": {
+        "portal": "State Agriculture Department / DBT Agriculture portal (state-specific)",
+        "workflow_id_hint": "nfsm_state_application",
+        "in_person": "District Agriculture Office"
+      },
+      "follow_up_query_hint": "What is the assistance rate for pulses under NFSM?",
+      "authoritative_source": {
+        "filename": "NFSM renamed NFSNM_OCR.pdf",
+        "page": 1,
+        "note": "NFSM → NFSNM rename notification and scope."
+      }
+    },
+
+    {
+      "code": "AIF",
+      "name": "AIF",
+      "long_name": "Agriculture Infrastructure Fund",
+      "category": "Agriculture Infrastructure Financing",
+      "one_liner": "Medium-to-long-term debt financing (up to ₹2 crore per project, expanded to more categories from Aug 2024) at an interest-subvented rate for post-harvest management and community farming assets.",
+      "always_include": false,
+      "applicability_rules": [
+        {
+          "attribute": "interests",
+          "values": [
+            "infrastructure", "cold_storage", "warehouse", "post_harvest",
+            "processing", "unknown"
+          ],
+          "source": {
+            "filename": "AIF Revised Scheme Guidelines  September 2024_OCR.pdf",
+            "page": 1,
+            "note": "AIF finances post-harvest management infrastructure and community farming assets."
+          }
+        }
+      ],
+      "disqualifying_rules": [],
+      "match_boost_if": [
+        {
+          "attribute": "interests",
+          "values": ["processing", "warehouse", "cold_storage"],
+          "source": {
+            "filename": "AIF Revised Scheme Guidelines  September 2024_OCR.pdf",
+            "page": 1,
+            "note": "AIF Aug 2024 expansion covers cold storage, warehouses, and primary processing."
+          }
+        }
+      ],
+      "required_information": [
+        {
+          "attribute": "interests",
+          "why_needed": "AIF funds specific infrastructure components — we need to know which project type."
+        },
+        {
+          "attribute": "entity_type",
+          "why_needed": "AIF is open to farmers, FPOs, PACS, cooperatives, agri-entrepreneurs — the entity type determines the application route."
+        }
+      ],
+      "key_benefits": [
+        "Interest subvention: 3% per annum on loans up to ₹2 crore",
+        "Credit guarantee cover under CGTMSE",
+        "Eligible components: cold storage, warehouses, processing units, community farming assets, custom hiring centres, primary processing",
+        "Aug 2024 expansion: farmers, FPOs, PACS, cooperatives, agri-entrepreneurs eligible across more component types"
+      ],
+      "who_should_apply": "Farmers, FPOs, PACS, cooperatives, agri-entrepreneurs, marketing cooperatives, and other eligible entities pursuing infrastructure projects.",
+      "how_to_register": {
+        "portal": "agriinfra.dac.gov.in",
+        "workflow_id_hint": "aif_application_to_disbursement",
+        "in_person": "Lending institution (bank / NBFC) partnered with AIF"
+      },
+      "follow_up_query_hint": "What is the interest subvention rate and maximum loan amount under AIF?",
+      "authoritative_source": {
+        "filename": "AIF Revised Scheme Guidelines  September 2024_OCR.pdf",
+        "page": 1,
+        "note": "AIF Revised Scheme Guidelines September 2024 — eligibility and terms."
+      }
+    }
+  ]
+}

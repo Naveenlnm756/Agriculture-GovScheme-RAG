@@ -1,0 +1,66 @@
+# Files copied into the Docker build context should be small + relevant.
+# Anything listed here is NOT sent to the Docker daemon at build time,
+# so it can never end up in the image.
+
+# --- Local envs / caches (huge, and leaks state) ---
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+
+# --- Secrets (never bake into the image) ---
+.env
+.env.local
+.env.*.local
+
+# --- Data ---
+# The heavy stuff (chroma indexes, raw PDFs, backups, vision cache,
+# SQLite DB) is EITHER on the Fly persistent volume OR local-only.
+# Never ship it inside the image.
+data/
+# Exception: scheme_eligibility.json is a reviewed code artefact that
+# scheme_discovery.py needs at runtime; the Dockerfile COPYs it back in
+# explicitly. Without this negation .dockerignore would still exclude
+# it from the build context.
+!data/scheme_eligibility.json
+
+# --- Eval / dev tooling not needed in production ---
+eval/
+notebooks/
+scripts/
+logs/
+*.ipynb
+
+# --- One-off scratch files from the ingestion incident ---
+inspect_*.py
+inspect_*.txt
+repair_*.py
+smoke_*.txt
+smoke_*.txt
+targeted_*.py
+verify_new_chunks.py
+qwen_smoke_output.txt
+judge_smoke_output.txt
+test_repaired_chroma.py
+test_targeted_upsert.py
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- VCS + docs (not needed inside the container) ---
+.git/
+.gitignore
+*.md
+!README.md
+
+# --- Docker/config files (already applied at build time) ---
+Dockerfile
+docker-compose.yml
+fly.toml
+.dockerignore

@@ -1,0 +1,1366 @@
+{
+  "$schema_version": "1.0",
+  "description": "Golden question set for RAG evaluation over the agri-scheme corpus (PMFBY, KCC/MISS, MIDH/NHB, SMAM, NFSNM, AIF, PM-KISAN). Every question is grounded on a specific document + page or workflow_id + step_no. Page numbers refer to the PDF page as extracted by pdftotext (not the printed page number in the document body, which may differ by a small offset for front-matter).",
+  "coverage_story": "Category distribution — not per-PDF distribution — is the load-bearing axis. Questions concentrate on the primary operational guideline of each scheme because these are what a real user asks about; secondary letters/circulars/templates are indexed for retrieval but rarely queried in isolation. PM-KISAN is represented via 5 workflow-grounded questions (Q003, Q004, Q005, Q015, Q043) since the corpus indexes PM-KISAN only through workflows (no PM-KISAN PDFs); scheme-level facts like the Rs 6000/year quantum are deliberately kept out of scope to preserve the load-bearing rule.",
+  "categories": {
+    "simple_procedural": "Basic workflow retrieval — one workflow, straightforward steps.",
+    "simple_factual": "Single-fact retrieval — a number, date, rate, name.",
+    "definition": "Definition or clarification of a term used by a scheme.",
+    "multi_hop_scheme": "Two or more facts within the same scheme's documents that must be combined.",
+    "cross_scheme": "Facts spanning two or more schemes.",
+    "temporal_supersession": "Requires comparing an older vs newer version of the same scheme's guidelines.",
+    "late_content_diagnostic": "Answer lies in the later pages of a long document — targets baseline chunk-truncation risk.",
+    "out_of_scope": "Corpus cannot answer — tests refusal honesty.",
+    "malformed_query": "Realistic user-style malformed variant of a clean question (same expected answer + sources). Tests retrieval robustness to Hindi transliteration, code-switching, telegraphic phrasing, and missing question words."
+  },
+  "target_counts": {
+    "simple_procedural": 12,
+    "simple_factual": 10,
+    "definition": 8,
+    "multi_hop_scheme": 12,
+    "cross_scheme": 10,
+    "temporal_supersession": 10,
+    "late_content_diagnostic": 8,
+    "out_of_scope": 8,
+    "malformed_query": 10
+  },
+  "questions": [
+    {
+      "question_id": "Q001",
+      "category": "simple_procedural",
+      "question": "How do I apply for a Custom Hiring Centre (CHC) subsidy under SMAM through the DBT agri-mechanization portal?",
+      "expected_answer": "Register online on the DBT Agriculture Mechanization portal using Aadhaar and complete Aadhaar-based e-KYC, then log in and upload basic details (bank, land, other documents). Apply for CHC establishment on the farmer module. Record the unique project/application ID. Wait for government-officer approval and permit generation. After approval, print the permit, purchase the approved implements and upload bill/make/model/serial details (with bank-loan documents for back-ended subsidy). Undergo physical verification of documents and implements. After successful verification, the officer approves the CHC subsidy and the payment file is generated. The workflow has 9 steps.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "SMAM_WF_02_CHC_ESTABLISHMENT",
+          "steps": "1-9"
+        }
+      ],
+      "diagnostic_purpose": "Baseline procedural retrieval — reranking should not degrade this."
+    },
+    {
+      "question_id": "Q002",
+      "category": "simple_procedural",
+      "question": "What are the steps to file an interest subvention claim with the lending institution under AIF?",
+      "expected_answer": "Log in to the AIF claim portal with valid LI credentials, choose 'Claim request' from the side menu, select 'Interest subvention', click 'Fetch Loan Applications' for the relevant duration, select the relevant loan application number(s), fill the interest amount and subvention amount, upload authenticated documents, and submit. If PMU identifies discrepancies you correct and re-submit. After Central PMU validation the claim is forwarded to DA&FW for processing subject to budget. After receiving subsidy the LI immediately adjusts/passes the benefit into the beneficiary's loan account, and separately tracks project completion (geo-tag on AIF portal). Twelve steps in total.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "AIF_WF_01_LI_INTEREST_SUBVENTION_CLAIM",
+          "steps": "1-12"
+        }
+      ],
+      "diagnostic_purpose": "Multi-step procedural workflow with a branching correction loop."
+    },
+    {
+      "question_id": "Q003",
+      "category": "simple_procedural",
+      "question": "How can a farmer register newly on the PM-KISAN portal?",
+      "expected_answer": "Open the PM-KISAN new-registration page, enter Aadhaar number, mobile number, select state, enter captcha, and submit. Aadhaar is authenticated against UIDAI; registration proceeds only if authentication succeeds. Provide the displayed Aadhaar consent. The workflow has 7 steps.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "PMK_NEW_REGISTRATION",
+          "steps": "1-7"
+        }
+      ],
+      "diagnostic_purpose": "Short procedural workflow — baseline layup."
+    },
+    {
+      "question_id": "Q004",
+      "category": "simple_procedural",
+      "question": "How does a farmer complete PM-KISAN e-KYC?",
+      "expected_answer": "There are three modes. OTP-based: open the PM-KISAN portal e-KYC option, enter Aadhaar number, submit the OTP received on the Aadhaar-linked mobile number. Biometric: visit a CSC/SSK with Aadhaar card and Aadhaar-linked mobile number. Face-authentication: use the PM-KISAN mobile app.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "PMK_EKYC",
+          "steps": "1-5"
+        }
+      ],
+      "diagnostic_purpose": "Multi-branch procedural — tests that retrieval brings back all three modes."
+    },
+    {
+      "question_id": "Q005",
+      "category": "simple_procedural",
+      "question": "What are the steps to voluntarily surrender PM-KISAN benefits?",
+      "expected_answer": "Enter your registration number, provide the Aadhaar consent, enter the image code, and enter the OTP sent to the Aadhaar-registered mobile number. After surrender no further PM-KISAN cash benefits can be received, and re-registration for PM-KISAN is not allowed. Six steps total.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "PMK_VOLUNTARY_SURRENDER",
+          "steps": "1-6"
+        }
+      ],
+      "diagnostic_purpose": "Procedural + policy consequence (post-surrender rules)."
+    },
+    {
+      "question_id": "Q006",
+      "category": "simple_procedural",
+      "question": "How do I use the PMFBY premium calculator?",
+      "expected_answer": "Select Year, Season, Scheme, State, District, Crop; enter the area in hectares; optionally use Load Value; and use Reset to clear the inputs. Nine steps.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "PMFBY_WF_02_PREMIUM_CALCULATOR",
+          "steps": "1-9"
+        }
+      ],
+      "diagnostic_purpose": "Simple structured-form workflow."
+    },
+    {
+      "question_id": "Q007",
+      "category": "simple_procedural",
+      "question": "How do I access an existing PMFBY crop-insurance application without a mobile number?",
+      "expected_answer": "Enter the Application Number and Farmer Name; select State, District, Tehsil and Village; then in Bank Details select State and District, choose whether you have an IFSC, enter and verify IFSC, enter Bank Name and Branch Name, enter the captcha and click Login. Fifteen steps.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "PMFBY_WF_04_APPLICATION_LOGIN",
+          "steps": "1-15"
+        }
+      ],
+      "diagnostic_purpose": "Longer form workflow — tests retrieval of a mid-length procedure."
+    },
+    {
+      "question_id": "Q008",
+      "category": "simple_procedural",
+      "question": "How does a farmer apply for a general KCC online?",
+      "expected_answer": "Visit the website of the bank you wish to apply to, choose Kisan Credit Card, click Apply, fill in the required details and submit. Note the application reference number sent after submission. If eligible, the bank will contact you for further processing within 3-4 working days.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "KCC_WF_01_GENERAL_ONLINE_APPLICATION",
+          "steps": "1-6"
+        }
+      ],
+      "diagnostic_purpose": "External-portal procedural — baseline."
+    },
+    {
+      "question_id": "Q009",
+      "category": "simple_procedural",
+      "question": "What is the AIF workflow from beneficiary registration to loan disbursement?",
+      "expected_answer": "Register as a beneficiary at the AIF Single Window System (agriinfra.dac.gov.in), prepare a DPR, submit it via SWS and to the Bank/LI, the DPR is verified by the PMU (GoI) and the Bank/LI. If rejected, correct/resubmit with State Project Team support. If accepted and approved, proceed to loan disbursement — loan amount is disbursed. Seven steps.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "AIF_WF_03_BENEFICIARY_TO_LOAN_DISBURSEMENT",
+          "steps": "1-7"
+        }
+      ],
+      "diagnostic_purpose": "Procedural with rejection branch."
+    },
+    {
+      "question_id": "Q010",
+      "category": "simple_procedural",
+      "question": "How does a farmer track an NHB Grant of Clearance (GoC) application?",
+      "expected_answer": "Open the NHB Track Application page and enter either the full Project Code or the last 3 digits of the Project Code, then submit the search to retrieve tracking information. Three steps.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "NHB_TRACK_APPLICATION",
+          "steps": "1-3"
+        }
+      ],
+      "diagnostic_purpose": "Very short workflow — baseline sanity."
+    },
+    {
+      "question_id": "Q011",
+      "category": "simple_procedural",
+      "question": "What is the process for submitting an NHB subsidy claim under a credit-linked project?",
+      "expected_answer": "After at least 50% of the term loan is disbursed, the bank/FI submits an estimated subsidy claim in Format II-A with supporting documents (appraisal report, sanction letter, disbursement statement, Format-IV undertaking, 50% release evidence). NHB releases estimated subsidy to the bank/FI which parks it in a Subsidy Reserve Fund Account (SRFA). After project completion and final term-loan withdrawal, the bank/FI submits the final claim in Format II-B within 18 months of the first term-loan instalment (with a possible 3-month extension). Documents include completion certificate, date-wise disbursement details and a certified expenditure statement (bank-certified up to Rs. 50 lakh, CA-certified above Rs. 50 lakh). A Joint Inspection Team (JIT) with bank, NHB, State Horticulture/Agriculture and an expert (for Cold Storage/Ripening) inspects the site. NHB determines final eligible subsidy on JIT assessment and committee approval. Twelve steps total (with a non-credit-linked branch).",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "NHB_SUBSIDY_CLAIM",
+          "steps": "1-12"
+        }
+      ],
+      "diagnostic_purpose": "Long, document-heavy procedural — reranking should help."
+    },
+    {
+      "question_id": "Q012",
+      "category": "simple_procedural",
+      "question": "How does a farmer apply for a single-implement subsidy under SMAM?",
+      "expected_answer": "Register on the DBT Agriculture Mechanization portal with Aadhaar-based e-KYC. Log in and upload basic details (bank, land, documents). Apply for the single implement. Record the unique application ID and PIN. View the approved dealer/manufacturer list. Negotiate price and select a dealer. Purchase the implement (dealer uploads bill, machine/serial details and joint photographs). Undergo post-sale physical verification by a government officer. After successful verification, the competent authority approves the subsidy and generates the payment file. Nine steps.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "SMAM_WF_01_SINGLE_IMPLEMENT_SUBSIDY",
+          "steps": "1-9"
+        }
+      ],
+      "diagnostic_purpose": "Procedural with verification checkpoint — baseline."
+    },
+    {
+      "question_id": "Q013",
+      "category": "simple_factual",
+      "question": "What is the farmer's premium share for Kharif food-grain and oilseed crops under PMFBY?",
+      "expected_answer": "2.0% of Sum Insured, or the Actuarial Premium Rate, whichever is less.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "26-27",
+          "section": "13.1 Table 1"
+        }
+      ],
+      "diagnostic_purpose": "Canonical single-number fact — retrieval must hit Section 13 Table 1."
+    },
+    {
+      "question_id": "Q014",
+      "category": "simple_factual",
+      "question": "What is the effective interest rate that a KCC farmer pays after full prompt-repayment incentive under MISS 2025-26?",
+      "expected_answer": "4% per annum — the 7% concessional rate is reduced by an additional 3% p.a. Prompt Repayment Incentive when the farmer repays within one year of drawal (or the date fixed by the bank).",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "MISS_guidelines_25-26_revised.pdf",
+          "pages": "1-2"
+        }
+      ],
+      "diagnostic_purpose": "Two-number arithmetic in a short doc — should retrieve the same page even at low k."
+    },
+    {
+      "question_id": "Q015",
+      "category": "simple_factual",
+      "question": "What is the maximum length of the grievance description a farmer can enter in the PM-KISAN grievance query form?",
+      "expected_answer": "Maximum 500 words. The farmer selects 'Raise Grievance', enters the Temporary/Registration Number and captcha, selects a grievance category, enters the description (capped at 500 words), and uploads a supporting document.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "PMK_GRIEVANCE_QUERY",
+          "steps": "5"
+        }
+      ],
+      "diagnostic_purpose": "PM-KISAN factual pinned to workflow step condition — replaces earlier Rs. 6000/year fact that was not in-corpus."
+    },
+    {
+      "question_id": "Q016",
+      "category": "simple_factual",
+      "question": "What is the interest subvention rate and maximum loan amount under AIF?",
+      "expected_answer": "3% per annum interest subvention, available for a maximum period of 7 years, on loans up to Rs. 2 crore per project. Beyond Rs. 2 crore the subvention is capped at the Rs. 2 crore portion.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "AIF Revised Scheme Guidelines September 2024.pdf",
+          "pages": "5-6"
+        }
+      ],
+      "diagnostic_purpose": "Single well-defined fact from AIF guidelines."
+    },
+    {
+      "question_id": "Q017",
+      "category": "simple_factual",
+      "question": "What is the MISS interest subvention rate paid to lending institutions for FY 2025-26?",
+      "expected_answer": "1.5% per annum, provided upfront to lending institutions on short-term loans up to Rs. 3 lakh per borrower per annum for agriculture and allied activities disbursed through KCC.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "MISS_guidelines_25-26_revised.pdf",
+          "pages": "1"
+        }
+      ],
+      "diagnostic_purpose": "Load-bearing single fact — quoted verbatim on page 1."
+    },
+    {
+      "question_id": "Q018",
+      "category": "simple_factual",
+      "question": "How many days does a farmer have to intimate a localised calamity (like hailstorm or inundation) loss under PMFBY?",
+      "expected_answer": "Within 72 hours from the occurrence of the peril. Intimation can be through the Crop Insurance App, the centralised toll-free number, the concerned Insurance Company's toll-free number, or the concerned bank/agriculture department/district officials.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "81",
+          "section": "Table 10 (Para 21.5.10)"
+        }
+      ],
+      "diagnostic_purpose": "Time-window factual — often cited in support contexts."
+    },
+    {
+      "question_id": "Q019",
+      "category": "simple_factual",
+      "question": "What is the penal interest rate on PMFBY claims not paid within the stipulated cut-off date?",
+      "expected_answer": "12% per annum on admissible pending claims beyond 30 days of uploading the actual yield data on the portal (or the soft-copy submission by the State Government), subject to release of the applicable subsidy by the State Government.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "42"
+        }
+      ],
+      "diagnostic_purpose": "Penalty fact — retrievable by 'penalty' or 'delayed settlement'."
+    },
+    {
+      "question_id": "Q020",
+      "category": "simple_factual",
+      "question": "Within how many days must NHB dispose of a grievance received via CPGRAMS, portal, email or Dak per the 2026 timelines order?",
+      "expected_answer": "Within 14 days from the date of receipt. The grievance is first submitted to the Managing Director within 7 days with a detailed background note, history, action-taken report and a reasoned recommendation.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "NHB_Office_Order_GoC_Subsidy_Grievance_Timelines_06-05-2026.pdf",
+          "pages": "2-3"
+        }
+      ],
+      "diagnostic_purpose": "Recent-order fact — retrieval should not confuse with old 2021/2023 timelines that this order supersedes."
+    },
+    {
+      "question_id": "Q021",
+      "category": "simple_factual",
+      "question": "What subsidy rate does MIDH provide for a shade-net house, and up to what area per beneficiary?",
+      "expected_answer": "50% of the cost, on a cost norm of Rs. 710/sq.m for tubular/rectangular shade-net (Rs. 450/sq.m for bamboo/cable-purlin), with rates 15% higher for NE & Himalayan States, Scheduled areas, vibrant villages, Andaman & Nicobar and Lakshadweep. Maximum area per beneficiary: 2,500 sq.m.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "MIDH_Operational_Guideline_2025.pdf",
+          "pages": "56"
+        }
+      ],
+      "diagnostic_purpose": "Signature MIDH factual — the scheme's stock example."
+    },
+    {
+      "question_id": "Q022",
+      "category": "simple_factual",
+      "question": "Under PMFBY, what is the centre-state subsidy sharing pattern for the North Eastern Region (NER)?",
+      "expected_answer": "90:10 (Centre 90%, State 10%). This differs from the 50:50 pattern applied in all other States/UTs.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "26-27",
+          "section": "13.1"
+        }
+      ],
+      "diagnostic_purpose": "Location-conditional fact."
+    },
+    {
+      "question_id": "Q023",
+      "category": "definition",
+      "question": "What does 'notified area' mean under PMFBY?",
+      "expected_answer": "'Notified Area' (NFA) refers to the geographic area officially notified by the State Government for the operation of the scheme for a particular crop and season. Assessment of yield losses for widespread calamities is done at the level of the Notified Insurance Unit (IU) within a notified area; the notified area also defines where localised calamities and post-harvest losses to insured farms are covered.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "8, 15-16",
+          "section": "Abbreviations + Section 5"
+        }
+      ],
+      "diagnostic_purpose": "Definition scattered across abbreviations + operative text — tests multi-chunk retrieval."
+    },
+    {
+      "question_id": "Q024",
+      "category": "definition",
+      "question": "How is a 'Small farmer' vs 'Marginal farmer' defined under the RBI KCC Directions, 2026?",
+      "expected_answer": "A Marginal farmer is one with landholding up to one hectare; a Small farmer is one with landholding of more than one hectare and up to two hectares.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "RBI_KCC_Directions_2026_Commercial_Banks.pdf",
+          "pages": "3"
+        }
+      ],
+      "diagnostic_purpose": "Definition retrieval — must return the specific Directions clause, not general lay usage."
+    },
+    {
+      "question_id": "Q025",
+      "category": "definition",
+      "question": "What is a 'localised calamity' under PMFBY?",
+      "expected_answer": "Loss or damage to notified insured crops resulting from identified localised risks — hailstorm, landslide, inundation, cloud-burst, and natural fire due to lightning — affecting isolated farms within the notified area. Loss is assessed at the individual insured farm level, and the farmer must give intimation within 72 hours.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "15",
+          "section": "5.3"
+        }
+      ],
+      "diagnostic_purpose": "Definition + peril list."
+    },
+    {
+      "question_id": "Q026",
+      "category": "definition",
+      "question": "For eligibility under NHB schemes, who is included in 'family'?",
+      "expected_answer": "The applicant's spouse, father, mother, sons and daughters. Only one member of the family is eligible for financial assistance under any NHB scheme/component (individually or through HUF/partnership/proprietorship/Directorship). Family members of ineligible categories (Constitutional post holders, Ministers/MPs/MLAs, government employees except Class-IV, pensioners with monthly pension >= Rs. 10,000) may avail one-time assistance subject to this family cap.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "FamilyDefinition.pdf",
+          "pages": "1"
+        }
+      ],
+      "diagnostic_purpose": "Definition + exclusion list combined."
+    },
+    {
+      "question_id": "Q027",
+      "category": "definition",
+      "question": "What is 'Prevented Sowing / Planting / Germination' risk under PMFBY?",
+      "expected_answer": "A situation where the insured area is prevented from sowing/planting/germination due to deficit rainfall or adverse seasonal/climatic conditions. A Notified Insurance Unit becomes eligible for a Prevented Sowing pay-out only if more than 75% of the crop-wise normal sown area for the notified crop in the IU has experienced unsown/prevented sowing/germination failure during the sowing period. 'Normal sown area' is the average of the actual sown area of the preceding three seasons.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "15, 60",
+          "section": "5.2 + 21.3"
+        }
+      ],
+      "diagnostic_purpose": "Definition + operative 75% trigger — multi-page."
+    },
+    {
+      "question_id": "Q028",
+      "category": "definition",
+      "question": "What is 'Post-Harvest Loss' coverage under PMFBY and for how long does it apply?",
+      "expected_answer": "Coverage available only up to a maximum period of two weeks (14 days) from harvesting, for crops that are required to be dried in cut-and-spread / small-bundled condition in the field, against the perils of hailstorm, cyclone, cyclonic rains and unseasonal rains.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "15",
+          "section": "5.4"
+        }
+      ],
+      "diagnostic_purpose": "Definition + duration in one chunk."
+    },
+    {
+      "question_id": "Q029",
+      "category": "definition",
+      "question": "What are LoC and GoC in the NHB context, and which agency handles each?",
+      "expected_answer": "LoC (Letter of Credit) and GoC (Grant of Clearance) are the two clearance/credit mechanisms used under NHB schemes. GoC applications are processed by NHB (Project Examination Committee -> Project Approval Committee) and the GoC is ordinarily issued within 30 days from receipt of a complete application. Under the current NHB notice, receipt of fresh GoC applications under Scheme No. 1 (Commercial Horticulture) and Scheme No. 2 (Cold Storage) is temporarily suspended.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "NHB_Office_Order_GoC_Subsidy_Grievance_Timelines_06-05-2026.pdf",
+          "pages": "1-2"
+        },
+        {
+          "type": "workflow",
+          "workflow_id": "NHB_GOC_APPLICATION_PREPARATION",
+          "steps": "1-2"
+        }
+      ],
+      "diagnostic_purpose": "Definition + procedural context + current status."
+    },
+    {
+      "question_id": "Q030",
+      "category": "definition",
+      "question": "What is the 'One Farmer-One KCC' norm under MISS 2025-26 and how is it enforced?",
+      "expected_answer": "The principle that a single farmer must hold only one Kisan Credit Card account across all lending institutions. Before issuing a new KCC, banks must perform a de-duplication check via the Kisan Rin Portal (KRP) and obtain a declaration from the applicant that they do not possess any other KCC account. Only one MISS benefit is available per land parcel. Where multiple KCC accounts already exist and one is in a cooperative society/bank, only that cooperative account is considered for MISS benefit during 2025-26.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "MISS_guidelines_25-26_revised.pdf",
+          "pages": "2-3"
+        }
+      ],
+      "diagnostic_purpose": "Definition + enforcement mechanism + edge case (multiple existing KCCs)."
+    },
+    {
+      "question_id": "Q031",
+      "category": "multi_hop_scheme",
+      "question": "Under PMFBY, if a farmer suffers a hailstorm loss to a standing crop, what is the claim procedure and what is the payment timeline?",
+      "expected_answer": "Hailstorm is treated as a localised calamity. The farmer must intimate the loss within 72 hours through the Crop Insurance App, centralised toll-free number, insurer's toll-free number, or via bank/agriculture department/district officials. The Insurance Company appoints a loss assessor; a joint survey follows. For localised calamities the loss is assessed at the individual insured farm. Claim settlement follows the timelines in Table 10 (Section 21.5). If claims are admissible and not paid within the stipulated cut-off date, penal interest at 12% per annum is payable on pending claims beyond 30 days of uploading the actual-yield data on the portal (subject to release of state subsidy).",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "15, 42, 81",
+          "section": "5.3 + Section 15 + Table 10"
+        }
+      ],
+      "diagnostic_purpose": "Multi-hop within PMFBY: intimation timeline + assessment procedure + penalty."
+    },
+    {
+      "question_id": "Q032",
+      "category": "multi_hop_scheme",
+      "question": "How does the RBI's 2026 KCC Directions change both the tenure and the collateral-free ceiling from the 2017 Master Circular?",
+      "expected_answer": "The 2026 Directions extend the KCC composite facility tenure to six years (up from five years in the 2017 Master Circular) and raise the collateral-free/margin-waiver ceiling for agricultural loans (including allied activities) to Rs. 2 lakh per borrower (up from Rs. 1 lakh under the 2017 MC's hypothecation-of-crops waiver). The tie-up-based collateral waiver ceiling of Rs. 3 lakh (with recovery arrangement) is retained.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "RBI_KCC_Directions_2026_Commercial_Banks.pdf",
+          "pages": "3-4, 9"
+        },
+        {
+          "type": "pdf",
+          "document": "RBI_KCC_Master_Circular_2017.pdf.pdf",
+          "pages": "5, 9"
+        }
+      ],
+      "diagnostic_purpose": "Multi-hop within KCC scheme — two facts from two paired documents."
+    },
+    {
+      "question_id": "Q033",
+      "category": "multi_hop_scheme",
+      "question": "Under MIDH, what is the total subsidy a general-area beneficiary can claim for a 2,500 sq.m fan-and-pad polyhouse plus a farm-gate pack house?",
+      "expected_answer": "Fan-and-pad polyhouse at Rs. 1500/sq.m for the 1008-2500 sq.m slab totals 2,500 * 1500 = Rs. 37.5 lakh cost, with assistance at 50% = Rs. 18.75 lakh. A farm-gate pack house (9m x 6m) has a cost norm of up to Rs. 25 lakh with 50% assistance = up to Rs. 12.5 lakh. Combined subsidy: up to approximately Rs. 31.25 lakh (subject to per-beneficiary and per-project ceilings). Rates are 15% higher in NE/Himalayan/Scheduled/vibrant-villages/A&N/Lakshadweep.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "MIDH_Operational_Guideline_2025.pdf",
+          "pages": "55, 63"
+        }
+      ],
+      "diagnostic_purpose": "Two component subsidies in one scheme — tests arithmetic + retrieval of two cost-norm rows."
+    },
+    {
+      "question_id": "Q034",
+      "category": "multi_hop_scheme",
+      "question": "Under MISS 2025-26, how does the interest subvention work for a farmer whose crop was destroyed by a severe natural calamity, over the restructuring period?",
+      "expected_answer": "For severe natural calamities (as decided by a High Level Committee based on IMCT and SC-NEC recommendations), the applicable rate of interest subvention for that year is made available to banks for the first three years / entire period, subject to a maximum of five years, on the restructured loan amount. The 3% per annum Prompt Repayment Incentive is also provided in such cases. From the year following the restructuring window, normal RBI-prescribed interest rates apply.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "MISS_guidelines_25-26_revised.pdf",
+          "pages": "2"
+        }
+      ],
+      "diagnostic_purpose": "Multi-hop reading of a single dense clause with several conditions."
+    },
+    {
+      "question_id": "Q035",
+      "category": "multi_hop_scheme",
+      "question": "Under NHB, what timeline governs the final subsidy claim, and what documents/certification are required for projects above Rs. 50 lakh?",
+      "expected_answer": "The final subsidy claim must be filed within 18 months from the release of the first term-loan instalment (with a possible 3-month extension when justified). Required documents include the bank/FI completion certificate, date-wise term-loan disbursement details, and a certified statement of expenditure. For projects up to Rs. 50 lakh, expenditure is certified by the bank; above Rs. 50 lakh, certification must be by a Chartered Accountant. A Joint Inspection Team (JIT) — including bank, NHB, State Horticulture/Agriculture and an expert for Cold Storage/Ripening units — then inspects the site before NHB determines the final eligible subsidy.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "NHB_SUBSIDY_CLAIM",
+          "steps": "5-9"
+        }
+      ],
+      "diagnostic_purpose": "Multi-hop: timeline + document set + threshold-based certification rule."
+    },
+    {
+      "question_id": "Q036",
+      "category": "multi_hop_scheme",
+      "question": "How does AIF interact with the CGTMSE credit guarantee and NABSanrakshan for FPOs?",
+      "expected_answer": "Credit guarantee is available for eligible AIF borrowers under CGTMSE for loans up to Rs. 2 crore, with the CGTMSE fee paid by the Government. In addition, after the 28 August 2024 Cabinet expansion, AIF credit guarantee coverage of FPOs is available through NABSanrakshan Trustee Company Pvt. Ltd. as a distinct option not present in the January 2023 guidelines. The 3% interest subvention and 7-year tenure (up to Rs. 2 crore per project) continue to apply.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "AIF Revised Scheme Guidelines September 2024.pdf",
+          "pages": "6"
+        },
+        {
+          "type": "pdf",
+          "document": "Official PIB Cabinet release AIF expansion, 28 Aug 2024.pdf",
+          "pages": "1"
+        }
+      ],
+      "diagnostic_purpose": "Multi-hop within AIF corpus: subvention + CGTMSE + new NABSanrakshan branch."
+    },
+    {
+      "question_id": "Q037",
+      "category": "multi_hop_scheme",
+      "question": "Under SMAM, what is the assistance pattern for establishing a Farm Machinery Bank (FMB), including caps on project cost and how per-machine assistance is derived?",
+      "expected_answer": "For FMB projects costing up to Rs. 30 lakh, financial assistance is 95% of the project cost. For FMBs above Rs. 30 lakh, the maximum permissible financial assistance is restricted to Rs. 28.50 lakh per project. Per-machine permissible assistance under the FMB project is calculated by multiplying the maximum permissible assistance shown at 50% in Annexure-I by 2, and then multiplying by 0.95. FMBs above Rs. 10 lakh must be established under the Credit-Linked Back-Ended Capital Subsidy model.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "SMAM-Revised-Operational-Guidelines-dated-18-12-2025.pdf",
+          "pages": "12"
+        }
+      ],
+      "diagnostic_purpose": "Multi-hop numeric derivation within one scheme document."
+    },
+    {
+      "question_id": "Q038",
+      "category": "multi_hop_scheme",
+      "question": "In PMFBY, what conditions must be met for a farmer to receive a Prevented-Sowing pay-out, and which farmers are eligible?",
+      "expected_answer": "The Insurance Unit is eligible for a Prevented Sowing / Planting pay-out only if more than 75% of the crop-wise normal sown area for the notified crop in that IU has experienced unsown/prevented sowing/germination failure during the sowing period. Normal sown area is the average of the last three seasons. Only farmers who have paid the premium (or had it debited from their account) before the damage notification are eligible. Banks must ensure premium is debited within 15 days of the KCC/crop-loan sanction/renewal and before the cut-off date.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "60"
+        }
+      ],
+      "diagnostic_purpose": "Multi-hop trigger + eligibility + banking obligation."
+    },
+    {
+      "question_id": "Q039",
+      "category": "multi_hop_scheme",
+      "question": "Under MIDH, what add-on components can be included in an NHB integrated project for cold storage, and what land cost is admissible?",
+      "expected_answer": "Under NHB Scheme No. 1/2, add-on components allowed include land (only if purchased newly within one year of loan sanction, actual or up to 10% of Eligible Project Cost excluding land, whichever is less, subject to a maximum of Rs. 60,000/acre), land development (actual or up to 15% of EPC, capped at Rs. 60,000/acre), tube-well up to Rs. 3 lakh per unit, and water-harvesting structure at Rs. 100/CuM with 300-micron plastic film or RCC lining. Cold Storage components must be implemented in accordance with NCCD guidelines only.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Costnorm2025.pdf",
+          "pages": "12"
+        },
+        {
+          "type": "pdf",
+          "document": "MIDH_Operational_Guideline_2025.pdf",
+          "pages": "82"
+        }
+      ],
+      "diagnostic_purpose": "Multi-hop: component list + numeric caps + technical reference."
+    },
+    {
+      "question_id": "Q040",
+      "category": "multi_hop_scheme",
+      "question": "Under PMFBY, how is the wild-animal add-on cover assessed, and what is the minimum area threshold for indemnity?",
+      "expected_answer": "The add-on covers eligible for indemnity only when the area affected by notified wild animals is more than 25% of the individual insured field/plot or 0.1 acre, whichever is lower, and the affected notified crop has less than 25% chance of crop revival till harvest. Coverage applies from 30 days after sowing to harvesting. Intimation is within 72 hours (primarily via Crop Insurance App or centralised toll-free number). The Insurance Company appoints a loss assessor within 48 hours; assessment is conducted after minimum 7 days (to test revival) and within 20 days of receipt of information. Claim settlement is completed in the next 10 days (subject to receipt of premium). Claims below Rs. 100 are not paid (franchise clause).",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "130, 132"
+        }
+      ],
+      "diagnostic_purpose": "Late-page multi-hop within Annexure I — combines area trigger, revival check, and timelines."
+    },
+    {
+      "question_id": "Q041",
+      "category": "multi_hop_scheme",
+      "question": "Under AIF, how is the 25-project ceiling per beneficiary applied, and to whom does it not apply?",
+      "expected_answer": "Interest subvention up to a Rs. 2 crore loan is available per location; a private-sector entity (farmer, agri-entrepreneur, startup) may avail up to 25 such projects in different locations, each with a separate LGD code. The 25-project cap does NOT apply to state agencies, cooperatives, national/state federations of cooperatives, FPOs, federations of FPOs, SHGs, or federations of SHGs.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "AIF Revised Scheme Guidelines September 2024.pdf",
+          "pages": "11"
+        }
+      ],
+      "diagnostic_purpose": "Multi-hop within AIF: general rule + exception list."
+    },
+    {
+      "question_id": "Q042",
+      "category": "multi_hop_scheme",
+      "question": "Under PMFBY, if a State Government delays release of premium subsidy, what penalty applies and where does it go?",
+      "expected_answer": "A penalty of interest at 12% per annum accrues on the State's share beyond three months of the prescribed cut-off date for release of subsidy (31st March of the succeeding year for Kharif and 30th September of that year for Rabi). The penalty is deposited into the Central Government Technology Fund.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "25, 33"
+        }
+      ],
+      "diagnostic_purpose": "Multi-hop: rate + cut-off dates + destination fund."
+    },
+    {
+      "question_id": "Q043",
+      "category": "cross_scheme",
+      "question": "A farmer voluntarily surrendered PM-KISAN benefits. Can they still receive interest subvention under MISS 2025-26 on a KCC agri-loan, and what does re-registration for PM-KISAN look like?",
+      "expected_answer": "Yes for MISS/KCC — after voluntary surrender of PM-KISAN, no further PM-KISAN cash benefits are payable and re-registration for PM-KISAN is not allowed (PMK_VOLUNTARY_SURRENDER steps 5-6). MISS 2025-26 eligibility, however, is independent of PM-KISAN — it requires only that the farmer hold a KCC and meet the One-Farmer-One-KCC and Aadhaar-authentication rules; the 1.5% upfront LI subvention, 7% concessional rate to the farmer, and 3% prompt-repayment incentive apply as normal on short-term agri-loans up to Rs. 3 lakh via KCC.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "PMK_VOLUNTARY_SURRENDER",
+          "steps": "5-6"
+        },
+        {
+          "type": "pdf",
+          "document": "MISS_guidelines_25-26_revised.pdf",
+          "pages": "1-3"
+        }
+      ],
+      "diagnostic_purpose": "Cross-scheme non-interaction test — retrieval must combine a workflow-side policy consequence with a PDF-side operative rule and NOT fabricate a linkage."
+    },
+    {
+      "question_id": "Q044",
+      "category": "cross_scheme",
+      "question": "Can a farmer stack subsidies from MIDH and AIF on the same horticulture infrastructure project?",
+      "expected_answer": "Yes. AIF's Sep 2024 revised guidelines explicitly permit convergence — any grant or subsidy under present or future Central/State schemes (including MIDH) can be availed on AIF-financed projects; the capital-subsidy amount is treated as the promoter's contribution. A minimum of 10% of the project cost is still mandatory as promoter's contribution. Other named convergences include PMFME, SMAM, Gobar-Dhan, PMKSY, AMI, RKVY, PM-KUSUM (A, B, C), PMEGP and PACS-as-MSC.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "AIF Revised Scheme Guidelines September 2024.pdf",
+          "pages": "12-13"
+        }
+      ],
+      "diagnostic_purpose": "Cross-scheme convergence rule — AIF-side authority for stacking MIDH."
+    },
+    {
+      "question_id": "Q045",
+      "category": "cross_scheme",
+      "question": "How does PMFBY interact with KCC when a farmer opts out of crop insurance at the time of a KCC renewal?",
+      "expected_answer": "PMFBY is voluntary since Kharif 2020; a loanee farmer who does not want crop insurance must submit a signed declaration at least 7 days before the enrolment/premium-debit cut-off date. Under MISS 2025-26, loan officers must not treat 'opt-out' as a default practice at KCC processing/renewal; they are required to clearly explain the implications and obtain informed, voluntary consent from the borrower for risk coverage at each KCC issuance and renewal. Banks must debit premium next-day after cut-off for loanee farmers who have not opted out, failing which the bank is liable for uncovered farmers' claims.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "34, 119"
+        },
+        {
+          "type": "pdf",
+          "document": "MISS_guidelines_25-26_revised.pdf",
+          "pages": "4"
+        }
+      ],
+      "diagnostic_purpose": "Cross-scheme (PMFBY x KCC/MISS) operational interaction — retrieval must combine both."
+    },
+    {
+      "question_id": "Q046",
+      "category": "cross_scheme",
+      "question": "Under SMAM and MIDH, what is the pattern of assistance in NE / Himalayan states compared to general areas for physical infrastructure like protected cultivation vs a Farm Machinery Bank?",
+      "expected_answer": "MIDH gives 15% higher cost norms and typically 50% assistance in NE & Himalayan States, Scheduled areas, vibrant villages, A&N and Lakshadweep, versus 35-40% in general areas (component-dependent). SMAM's FMB assistance is 95% of project cost up to Rs. 30 lakh (with per-machine caps derived from Annexure-I); for individual-ownership machinery in NE / Himalayan region, financial assistance is 100% up to Rs. 1.25 lakh per machine for FRA-patta holders (Annexure-II). Both schemes therefore give NE / Himalayan region a materially better subsidy pattern than general areas.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "MIDH_Operational_Guideline_2025.pdf",
+          "pages": "55-56"
+        },
+        {
+          "type": "pdf",
+          "document": "SMAM-Revised-Operational-Guidelines-dated-18-12-2025.pdf",
+          "pages": "12"
+        }
+      ],
+      "diagnostic_purpose": "Cross-scheme structural comparison of regional differentials."
+    },
+    {
+      "question_id": "Q047",
+      "category": "cross_scheme",
+      "question": "If a farmer receives an interest-subvention-supported KCC loan and later takes an AIF-financed post-harvest infrastructure loan, do the interest subventions stack?",
+      "expected_answer": "They apply to different loans. MISS interest subvention (1.5% upfront to LI + 3% Prompt Repayment Incentive to borrower on up to Rs. 3 lakh short-term KCC agri-loans) applies to the KCC loan itself. AIF's 3% p.a. interest subvention (up to a Rs. 2 crore loan, for max 7 years) applies to a separate term loan for eligible post-harvest / community-farming asset projects. Convergence of grants/subsidies with AIF is permitted, and the same borrower can enjoy both benefits on different loans. The MISS benefit is per land parcel / per farmer under the One-Farmer-One-KCC rule; the AIF interest-subvention Rs. 2 crore cap is per project location (up to 25 locations for private-sector individuals).",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "MISS_guidelines_25-26_revised.pdf",
+          "pages": "1-2"
+        },
+        {
+          "type": "pdf",
+          "document": "AIF Revised Scheme Guidelines September 2024.pdf",
+          "pages": "5-6, 11-13"
+        }
+      ],
+      "diagnostic_purpose": "Cross-scheme benefit reconciliation — tests retrieval across both scheme docs and correct scope reading."
+    },
+    {
+      "question_id": "Q048",
+      "category": "cross_scheme",
+      "question": "How do the family/beneficiary rules under NHB (MIDH) differ from PMFBY's coverage of a landholding family?",
+      "expected_answer": "NHB restricts financial assistance under any scheme/component to only one member of a family (defined as spouse, father, mother, sons, daughters), across all NHB schemes and components — the entitlement is a family-level cap. PMFBY, by contrast, insures every enrolled farmer on the crop area they cultivate; the unit of insurance is the farmer x notified area x crop, not the family. Additionally, PMFBY has been voluntary for all farmers since Kharif 2020, whereas NHB assistance is only for eligible categories and is disallowed for Constitutional post holders, Ministers, MPs/MLAs, government employees except Class-IV, pensioners with monthly pension >= Rs. 10,000 and Group of Farmers.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "FamilyDefinition.pdf",
+          "pages": "1"
+        },
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "119"
+        }
+      ],
+      "diagnostic_purpose": "Cross-scheme conceptual contrast (unit of eligibility)."
+    },
+    {
+      "question_id": "Q049",
+      "category": "cross_scheme",
+      "question": "For post-harvest storage in a WDRA-accredited warehouse, what benefit does MISS give the farmer, and how does that compare with AIF's warehouse coverage?",
+      "expected_answer": "Under MISS 2025-26, small and marginal farmers holding a KCC are eligible for interest subvention at the same rate as the agri-loan for a further period of up to six months of post-harvest, on produce stored in WDRA-accredited warehouses against negotiable warehouse receipts. AIF, on the other hand, finances the creation of warehouses themselves — warehouses and silos are eligible post-harvest management infrastructure under AIF, with 3% interest subvention up to Rs. 2 crore loan for 7 years (plus CGTMSE fee coverage). MISS aids the farmer's holding cost; AIF aids the infrastructure owner's capex.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "MISS_guidelines_25-26_revised.pdf",
+          "pages": "2"
+        },
+        {
+          "type": "pdf",
+          "document": "AIF Revised Scheme Guidelines September 2024.pdf",
+          "pages": "7"
+        }
+      ],
+      "diagnostic_purpose": "Cross-scheme role differentiation on the same physical asset (warehouse)."
+    },
+    {
+      "question_id": "Q050",
+      "category": "cross_scheme",
+      "question": "Can PM-KUSUM Component A converge with AIF, and what infrastructure does that enable?",
+      "expected_answer": "Yes. After the 28 August 2024 Cabinet approval, convergence of PM-KUSUM Component A with AIF is allowed for individual farmers / group of farmers / FPOs / cooperatives / panchayats. This enables the setting up of decentralised ground-mounted or stilt-mounted grid-connected solar power plants of capacity up to 2 MW on barren/cultivable/uncultivable/pasture or marshy lands, financed under AIF terms (3% subvention up to Rs. 2 crore loan, 7-year tenure).",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "AIF Revised Scheme Guidelines September 2024.pdf",
+          "pages": "7-8"
+        },
+        {
+          "type": "pdf",
+          "document": "Official PIB Cabinet release AIF expansion, 28 Aug 2024.pdf",
+          "pages": "1"
+        }
+      ],
+      "diagnostic_purpose": "Cross-scheme convergence — specifically tests retrieval of the Aug 2024 expansion clause."
+    },
+    {
+      "question_id": "Q051",
+      "category": "cross_scheme",
+      "question": "How does the definition of 'small farmer' under RBI KCC Directions 2026 line up with the beneficiary category used for extended storage subvention under MISS?",
+      "expected_answer": "The KCC Directions 2026 define a Marginal farmer as one with landholding up to 1 hectare and a Small farmer as one with more than 1 hectare and up to 2 hectares. MISS 2025-26 grants a six-month post-harvest storage subvention specifically to 'small and marginal farmers' holding KCC on produce stored in WDRA-accredited warehouses against negotiable warehouse receipts. Thus, farmers with landholding up to 2 hectares are eligible for that extended benefit.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "RBI_KCC_Directions_2026_Commercial_Banks.pdf",
+          "pages": "3"
+        },
+        {
+          "type": "pdf",
+          "document": "MISS_guidelines_25-26_revised.pdf",
+          "pages": "2"
+        }
+      ],
+      "diagnostic_purpose": "Cross-scheme definition-to-benefit chaining."
+    },
+    {
+      "question_id": "Q052",
+      "category": "cross_scheme",
+      "question": "For a farmer setting up a Custom Hiring Centre with SMAM funding and also renting out farm implements to KCC-holder farmers, do both schemes' eligibility rules interact?",
+      "expected_answer": "SMAM CHC establishment offers 40% financial assistance on projects up to Rs. 250 lakh for eligible entities (state governments, rural entrepreneurs, SHGs, FPOs, PACS, cooperative societies of farmers). KCC is a bank loan facility, unrelated to receiving CHC subsidy — farmers who hire equipment from a CHC do not need to hold a KCC, and holding a KCC does not entitle a farmer to CHC assistance. The two schemes are complementary but do not gate each other's eligibility.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "SMAM-Revised-Operational-Guidelines-dated-18-12-2025.pdf",
+          "pages": "10-11"
+        },
+        {
+          "type": "pdf",
+          "document": "RBI_KCC_Directions_2026_Commercial_Banks.pdf",
+          "pages": "5"
+        }
+      ],
+      "diagnostic_purpose": "Cross-scheme non-interaction check — retrieval must clarify independence, not fabricate a rule."
+    },
+    {
+      "question_id": "Q053",
+      "category": "temporal_supersession",
+      "question": "How did the RBI KCC framework change between the 2017 Master Circular and the 2026 Directions?",
+      "expected_answer": "The 2026 Directions formally repeal and supersede the 2017 Master Circular (FIDD.CO.FSD.BC.No.7/05.05.010/2017-18 dated 03.07.2017) along with 12 other prior KCC circulars. Key operative changes include: (a) tenure of composite KCC facility extended from 5 years to 6 years; (b) collateral-free ceiling on ag-loans raised from Rs. 1 lakh to Rs. 2 lakh per borrower; (c) explicit permission to operate KCC via UPI, debit cards, mobile/internet banking, NEFT, RTGS, and CBDC (in addition to the earlier EMV/RuPay + IMPS/USSD framework), on account-holder consent; (d) formalised quarterly reporting obligation (within 15 working days of quarter-end); (e) narrower institutional scope: 2026 Directions for Commercial Banks apply only to Commercial Banks (with separate Directions for RRBs, SFBs and Rural Cooperative Banks) whereas the 2017 MC was a single instrument.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "RBI_KCC_Directions_2026_Commercial_Banks.pdf",
+          "pages": "2-4, 9, 11, 13, 23"
+        },
+        {
+          "type": "pdf",
+          "document": "RBI_KCC_Master_Circular_2017.pdf.pdf",
+          "pages": "5, 9"
+        }
+      ],
+      "diagnostic_purpose": "Signature temporal / supersession question — differentiator of this corpus."
+    },
+    {
+      "question_id": "Q054",
+      "category": "temporal_supersession",
+      "question": "What did the 28 August 2024 Cabinet decision change in the scope of the Agriculture Infrastructure Fund?",
+      "expected_answer": "The Cabinet expanded AIF's scope beyond the earlier post-harvest-only focus (Jan 2023 guidelines) to include: (a) creation of 'viable community farming assets' — organic input production, biostimulant units, custom hiring centres, smart & precision agriculture infrastructure including drones, boom sprayers, sensors, IoT/AI, remote sensing; (b) integrated primary + secondary processing activities (standalone secondary processing remains ineligible); (c) convergence with PM-KUSUM Component A for decentralised grid-connected solar plants up to 2 MW; (d) NABSanrakshan-backed credit-guarantee coverage for FPO loans in addition to CGTMSE. The operational period was extended (per Sep 2024 revised guidelines) to run up to FY 2032-33, with loan disbursement to complete by FY 2025-26.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Official PIB Cabinet release AIF expansion, 28 Aug 2024.pdf",
+          "pages": "1-2"
+        },
+        {
+          "type": "pdf",
+          "document": "AIF Revised Scheme Guidelines September 2024.pdf",
+          "pages": "5-8"
+        }
+      ],
+      "diagnostic_purpose": "Temporal supersession — Jan 2023 vs Sep 2024 expansion, PIB cross-cited."
+    },
+    {
+      "question_id": "Q055",
+      "category": "temporal_supersession",
+      "question": "How has the SMAM revised operational guidelines dated 18 December 2025 changed the assistance for individual-ownership agricultural implements compared to the 2018-19 guidelines?",
+      "expected_answer": "Under SMAM 2025 (dated 18 Dec 2025), the pattern of assistance is codified in Annexure-I with a maximum-permissible-subsidy table (typically 40% general / 50% for SC/ST/women/small-marginal farmers, subject to per-implement caps), operating through the DBT-Agrimachinery portal and the Namo Drone Didi framework for drones. The 2018-19 guidelines had the same broad category-based differential but predate the current DBT-portal-only workflow, the explicit Kisan Drone provisions, integration with Namo Drone Didi (drones supplied as a package), the 25%-flexi-funds provision for States, and the current 1% administrative earmark from annual outlay. The 2025 version also introduces Krishi MApper geo-referencing and Krishi Sakhi engagement (Rs. 100/ha) for demonstrations, both absent from 2018-19.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "SMAM-Revised-Operational-Guidelines-dated-18-12-2025.pdf",
+          "pages": "13-17"
+        },
+        {
+          "type": "pdf",
+          "document": "SMAM_Operational_Guidelines_2018_19.pdf",
+          "pages": "10-18"
+        }
+      ],
+      "diagnostic_purpose": "Temporal comparison — Kisan Drone / Namo Drone Didi / Krishi MApper are 2025-only."
+    },
+    {
+      "question_id": "Q056",
+      "category": "temporal_supersession",
+      "question": "In what way does the NHB Office Order dated 6 May 2026 supersede earlier NHB timeline circulars?",
+      "expected_answer": "The Office Order dated 6 May 2026 (File No. NHB/CG/Circular/2026-27/4) expressly supersedes NHB's earlier orders NHB/MD-Office/Circular/2021-22/5274 dated 03.09.2021, NHB/HD/CC/Misc./2022-23/7130 dated 03.01.2023, and NHB/DMD-Office/Circular/2023-24/5394 dated 08.12.2023. It prescribes new fixed timelines: GoC applications processed within 7 days (queries same window); PEC meets weekly; Cold Storage BDS scrutiny within 15 days; GoC issued within 30 days of complete application; subsidy claims examined within 7 days; JIT inspection within 15 days; grievances submitted to MD within 7 days and disposed within 14 days.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "NHB_Office_Order_GoC_Subsidy_Grievance_Timelines_06-05-2026.pdf",
+          "pages": "1-3"
+        }
+      ],
+      "diagnostic_purpose": "Temporal within one document — retrieval must identify the supersession clause and enumerate new timelines."
+    },
+    {
+      "question_id": "Q057",
+      "category": "temporal_supersession",
+      "question": "How did the 2020 Revamped PMFBY change enrolment from the earlier operational guidelines?",
+      "expected_answer": "Effective Kharif 2020, PMFBY became voluntary for ALL farmers (loanee and non-loanee); under the earlier Operational Guidelines it was compulsory for loanee farmers. Loanee farmers who wish to opt out must now submit a signed declaration at least 7 days before the enrolment / premium-debit cut-off date. Banks must debit premium next-day after the opt-out cut-off; failing which they are liable for uncovered eligible-farmer claims.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "34, 119"
+        },
+        {
+          "type": "pdf",
+          "document": "operational_guidelines_pmfby.pdf",
+          "pages": "N/A",
+          "note": "For contrast — earlier compulsory-for-loanee framing referenced in 2020 revamped doc."
+        }
+      ],
+      "diagnostic_purpose": "Temporal within PMFBY — the voluntary-conversion is a headline change."
+    },
+    {
+      "question_id": "Q058",
+      "category": "temporal_supersession",
+      "question": "How does the Feb 2026 Revised KCC Scheme differ from the RBI Directions 2026 for Commercial Banks issued shortly after?",
+      "expected_answer": "The 'Revised Kisan Credit Card Scheme' issued February 12, 2026 is the umbrella scheme framework by DA&FW, while the RBI Directions 2026 (Commercial Banks / SFBs / RRBs / Rural Cooperative Banks) are RBI's binding directions to lending institutions operationalising it. The Directions apply to KCC loans sanctioned from January 1, 2027 (loans sanctioned earlier continue under extant guidelines till maturity/next renewal); they codify definitions (Marginal 1 ha, Small 1-2 ha), the 5/6-year tenure, the Rs. 2 lakh collateral-free ceiling, quarterly reporting, and modern payment channels (UPI/CBDC etc.). The Revised Scheme Feb 2026 provides the policy scope; the RBI Directions provide the operational rulebook.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "RBI-issued-the-revised-Kisan-Credit-Card--KCC--Scheme-February122026.pdf",
+          "pages": "1-3"
+        },
+        {
+          "type": "pdf",
+          "document": "RBI_KCC_Directions_2026_Commercial_Banks.pdf",
+          "pages": "1-4"
+        }
+      ],
+      "diagnostic_purpose": "Temporal within same year — tests distinction between scheme circular and RBI directions."
+    },
+    {
+      "question_id": "Q059",
+      "category": "temporal_supersession",
+      "question": "What is the difference in scope of MIDH between the 2014 guidelines and the 2025 revised guidelines?",
+      "expected_answer": "The 2014 MIDH Guidelines set up the original mission (National Horticulture Mission, HMNEH, NBM, NHB, CDB, CIH) with a broad component list at legacy cost norms and pattern of assistance. The 2025 MIDH Operational Guidelines revise cost norms (per Annexure-VI and the 2025 Cost Norms document), introduce a 60:40 general vs 90:10 NE/Himalayan sharing pattern (with 100% GoI for NHB/CDB/CIH/UTs without legislature), formalise LoC/GoC processes, add new components (integrated pack houses up to Rs. 160 lakh, CS-2 with CA up to Rs. 1345 lakh, refrigerated transport up to Rs. 80 lakh general / Rs. 100 lakh NE), and align cold-storage and reefer-van assistance to NCCD engineering guidelines.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "MIDH_Operational_Guideline_2025.pdf",
+          "pages": "2, 55-70"
+        },
+        {
+          "type": "pdf",
+          "document": "MIDH_Guideline_2014.pdf",
+          "pages": "N/A",
+          "note": "For contrast — earlier legacy norms."
+        }
+      ],
+      "diagnostic_purpose": "Temporal within MIDH."
+    },
+    {
+      "question_id": "Q060",
+      "category": "temporal_supersession",
+      "question": "How did the NFSM programme evolve into NFSNM, and what was added when it was renamed?",
+      "expected_answer": "NFSM was renamed to NFSNM (National Food Security and Nutrition Mission) reflecting the addition of nutri-cereals (millets) and nutrition-focused interventions alongside the earlier rice, wheat, pulses and coarse-cereals coverage. The FY 2025-26 NFSNM guidelines cover crop-based cropping systems (jute-based in 9 states; sugarcane-based in 13 states), assistance for foundation and certified seed production (e.g., jute foundation Rs. 12,000/qtl, certified Rs. 5,500/qtl), alternate retting FLDs (Rs. 20,000/FLD), tissue-culture plantlets @ 50% cost up to Rs. 3.5/seedling for sugarcane, and mapping activities on Krishi Mapper and SATHI portal — items expanding beyond the original NFSM 2013 scope.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "NFSM renamed NFSNM.pdf",
+          "pages": "1"
+        },
+        {
+          "type": "pdf",
+          "document": "NFSNM GUIDELINES APPROVED FY 2025-2026.pdf",
+          "pages": "45-49"
+        },
+        {
+          "type": "pdf",
+          "document": "NFSMguidelineson17.10.2013.pdf",
+          "pages": "N/A",
+          "note": "For contrast."
+        }
+      ],
+      "diagnostic_purpose": "Temporal — name change + scope expansion."
+    },
+    {
+      "question_id": "Q061",
+      "category": "temporal_supersession",
+      "question": "What is the current disbursement window under AIF versus what the January 2023 guidelines had?",
+      "expected_answer": "Under the September 2024 revised guidelines (following the 28 Aug 2024 Cabinet approval), loan disbursement under AIF is to be completed within six years i.e. by the end of FY 2025-26, while the operational period of the scheme runs up to FY 2032-33. As on 30 June 2024, Rs. 43,391 crore had been sanctioned and Rs. 28,171 crore disbursed; the remaining Rs. 71,829 crore of the Rs. 1 lakh crore corpus is to be disbursed in FY 2024-25 and FY 2025-26. The January 2023 guidelines had a shorter operational horizon, without the 2032-33 tail added by the Aug 2024 expansion.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "AIF Revised Scheme Guidelines September 2024.pdf",
+          "pages": "5"
+        },
+        {
+          "type": "pdf",
+          "document": "AIF Revised Scheme Guidelines  January 2023.pdf",
+          "pages": "N/A",
+          "note": "For contrast."
+        }
+      ],
+      "diagnostic_purpose": "Temporal windows — Jan 2023 vs Sep 2024."
+    },
+    {
+      "question_id": "Q062",
+      "category": "temporal_supersession",
+      "question": "How was PMFBY / RWBCIS administratively approved for its post-2020 revamped implementation?",
+      "expected_answer": "The 24 March 2020 order titled 'Order on Revamped PMFBY_WBCIS' issued administrative approval for the revamped PMFBY and RWBCIS to be implemented from Kharif 2020 onwards, which is when the voluntary-coverage change, higher subsidy sharing for NER (90:10), penalties for delayed settlement (12% p.a. beyond 30 days), and the Table 1 premium-rate cap system (2%/1.5%/5%) came into force via the Revamped Operational Guidelines dated 17 August 2020.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "24th March Order on Revamped PMFBY_WBCIS.pdf",
+          "pages": "1"
+        },
+        {
+          "type": "pdf",
+          "document": "Implementation of revamped PMFBY and RWBCIS- Administrative Approval.pdf",
+          "pages": "1"
+        },
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "26-27, 42, 119"
+        }
+      ],
+      "diagnostic_purpose": "Temporal within PMFBY — links administrative order to operational guidelines."
+    },
+    {
+      "question_id": "Q063",
+      "category": "late_content_diagnostic",
+      "question": "What is the assistance rate for jute foundation seed and certified seed production under the NFSNM 2025-26 guidelines?",
+      "expected_answer": "Rs. 12,000 per quintal for production of foundation seed, and Rs. 5,500 per quintal for production of certified seed. Varieties must not be older than 10 years, but implementing agencies may produce varieties between 10 and 15 years old for up to 20% of the total allocation.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "NFSNM GUIDELINES APPROVED FY 2025-2026.pdf",
+          "pages": "45"
+        }
+      ],
+      "diagnostic_purpose": "Late-content diagnostic — page 45 of a 100-page NFSNM PDF."
+    },
+    {
+      "question_id": "Q064",
+      "category": "late_content_diagnostic",
+      "question": "What is the assistance for tissue-culture-raised plantlets under the NFSNM Sugarcane cropping-system programme?",
+      "expected_answer": "50% of the cost of seedlings limited to Rs. 3.5 per seedling, provided to the State Department of Agriculture, Cane Commissioner, ICAR, and Sugarcane Research Institutions of Central and State Government. The agency may either avail subsidy on production of plantlets OR on supply — but not on both to the same agency/department.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "NFSNM GUIDELINES APPROVED FY 2025-2026.pdf",
+          "pages": "49"
+        }
+      ],
+      "diagnostic_purpose": "Late-content diagnostic — page 49."
+    },
+    {
+      "question_id": "Q065",
+      "category": "late_content_diagnostic",
+      "question": "Which states are covered under the NFSNM Sugarcane-based cropping system programme?",
+      "expected_answer": "13 states: Andhra Pradesh, Bihar, Gujarat, Haryana, Karnataka, Madhya Pradesh, Maharashtra, Orissa, Punjab, Telangana, Tamil Nadu, Uttarakhand and Uttar Pradesh.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "NFSNM GUIDELINES APPROVED FY 2025-2026.pdf",
+          "pages": "49"
+        }
+      ],
+      "diagnostic_purpose": "Late-content diagnostic — state list on page 49 (long tail chunk)."
+    },
+    {
+      "question_id": "Q066",
+      "category": "late_content_diagnostic",
+      "question": "What is the total combined liability of a PMFBY policy plus the wild-animals add-on cover, and under what conditions is the add-on applicable?",
+      "expected_answer": "Under Annexure-I of the PMFBY Revamped Operational Guidelines, the total combined liability of PMFBY yield-loss claims plus the wild-animals add-on cover is capped at 100% of the Sum Insured. The add-on is available on a pilot basis in areas where the risk is substantial (indemnity level + 10% loss), identifiable and not frequent/regular, as per MOEF&CC / State Forest Department categorization. The add-on cover applies from 30 days after sowing to harvesting, and is triggered only when the affected area is more than 25% of the individual insured field/plot or 0.1 acre (whichever is lower) with less than 25% chance of crop revival. Claim settlement follows within 10 days after assessment.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "128, 130, 132"
+        }
+      ],
+      "diagnostic_purpose": "Late-content diagnostic — Annexure I (pages 121-132 of a 158-page PDF)."
+    },
+    {
+      "question_id": "Q067",
+      "category": "late_content_diagnostic",
+      "question": "What is the franchise amount below which PMFBY wild-animals add-on claims are not paid?",
+      "expected_answer": "Claims amounting to less than Rs. 100 per intimation are not paid, in order to reduce administrative cost. Claims equal to or above Rs. 100 are paid in full.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "132"
+        }
+      ],
+      "diagnostic_purpose": "Late-content diagnostic — very specific ceiling on late page."
+    },
+    {
+      "question_id": "Q068",
+      "category": "late_content_diagnostic",
+      "question": "What happens at step 11 of the NHB Subsidy Claim workflow, and what inputs does it require?",
+      "expected_answer": "Step 11 opens the non-credit-linked branch of the workflow: 'For eligible non-credit-linked cases, submit the subsidy claim after completion of the new project and Joint Inspection by the NHB-constituted team.' The inputs required are the application/claim form and project-completion evidence. The gating condition is that non-credit-linked subsidy is available only for specified eligible categories/areas and new projects under the stated conditions. This branches away from steps 1-10, which describe the credit-linked route (estimated subsidy in Format II-A, released to bank/FI SRFA, then final claim in Format II-B within 18 months of first term-loan instalment).",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "NHB_SUBSIDY_CLAIM",
+          "steps": "11",
+          "raw_instruction": "For eligible non-credit-linked cases, submit the subsidy claim after completion of the new project and Joint Inspection by the NHB-constituted team.",
+          "raw_input_required": "Application/claim form; project completion evidence",
+          "raw_condition": "NHB states that non-credit-linked subsidy is available only for specified eligible categories/areas and new projects under the stated conditions."
+        }
+      ],
+      "diagnostic_purpose": "Workflow-late-content diagnostic — the Path A commitment. Step 11 is substantively load-bearing (it introduces the non-credit-linked branch with distinct JIT gating), not a trivial 'click submit' step, so a correct answer must retrieve this specific CSV row rather than inferring from earlier steps. If the workflow-serialisation strategy truncates around step 8-9 (baseline concern), retrieval fails regardless of embedding quality."
+    },
+    {
+      "question_id": "Q069",
+      "category": "late_content_diagnostic",
+      "question": "What is the sub-cap on the Controlled-Atmosphere (CA) add-on component under a CS-2 cold-storage project in NHB?",
+      "expected_answer": "The maximum project cost for CS-2 with CA add-on is Rs. 1,375 lakh under NHB (Rs. 1,345 lakh under NHM/HMNEH), and the maximum subsidy attributable to the CA store including add-ons is capped at Rs. 900 lakh. Assistance is 35% in general areas and 50% in NE & Himalayan / Scheduled / vibrant villages / A&N / Lakshadweep.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "MIDH_Operational_Guideline_2025.pdf",
+          "pages": "83"
+        }
+      ],
+      "diagnostic_purpose": "Late-content diagnostic — pages 82-83 for NHB norms."
+    },
+    {
+      "question_id": "Q070",
+      "category": "late_content_diagnostic",
+      "question": "Under MISS 2025-26 additional guidelines, what is the mandatory 'gap' between loan repayment and renewal, and why?",
+      "expected_answer": "Banks must institute a mandatory minimum gap of seven (7) days between the repayment of loans from the previous crop cycle and the renewal or sanction of loans for the subsequent cycle. The stated purpose is to prevent evergreening of KCC loans. In parallel, drawal of the sanctioned credit limit in one go is to be avoided; instead, banks should give drawal permission in installments (preferably three) with reasonable gaps between each installment.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "MISS_guidelines_25-26_revised.pdf",
+          "pages": "3-4"
+        }
+      ],
+      "diagnostic_purpose": "Late-in-document (page 3-4 of a 5-page dense circular) operational detail."
+    },
+    {
+      "question_id": "Q071",
+      "category": "out_of_scope",
+      "question": "What is the LTV limit for personal gold loans as per the latest RBI Master Direction?",
+      "expected_answer": "This corpus does not cover RBI's personal gold-loan Master Direction. The KCC documents in this corpus discuss KCC-linked agri-gold loan practices but do not state the general personal-gold-loan LTV limit. The system should refuse to answer this question or state that the fact is not available in the indexed sources.",
+      "expected_sources": [],
+      "diagnostic_purpose": "Refusal — retrieval must not fabricate. Adjacent-topic distractor (gold + KCC)."
+    },
+    {
+      "question_id": "Q072",
+      "category": "out_of_scope",
+      "question": "What was the RBI repo rate in June 2024?",
+      "expected_answer": "Not available in this corpus. The MISS and KCC documents mention subvention and lending rates but do not report the RBI policy repo rate. The system should refuse or return a 'not in source' response.",
+      "expected_sources": [],
+      "diagnostic_purpose": "Refusal — plausible-sounding financial fact but out-of-scope."
+    },
+    {
+      "question_id": "Q073",
+      "category": "out_of_scope",
+      "question": "What is the MSP for Basmati rice for the 2025-26 marketing season?",
+      "expected_answer": "Not available in this corpus. PMFBY guidelines reference MSP for Sum Insured computation but do not list the actual MSP figure for Basmati rice for 2025-26. The system should refuse or explicitly say the value is not in the indexed documents.",
+      "expected_sources": [],
+      "diagnostic_purpose": "Refusal — adjacent-topic distractor (MSP + PMFBY)."
+    },
+    {
+      "question_id": "Q074",
+      "category": "out_of_scope",
+      "question": "How much subsidy is available for a solar irrigation pump under PM-KUSUM Component B?",
+      "expected_answer": "This corpus covers only the AIF-convergence mention of PM-KUSUM (specifically Component A after Aug 2024). It does not include PM-KUSUM's own guidelines for Component B subsidy rates. The system should refuse to give a numeric answer and point to PM-KUSUM's own documents.",
+      "expected_sources": [],
+      "diagnostic_purpose": "Refusal — the corpus mentions PM-KUSUM by name but does not carry its rate schedule. Tests hallucination temptation."
+    },
+    {
+      "question_id": "Q075",
+      "category": "out_of_scope",
+      "question": "What are the eligibility criteria for the PMFME (Formalisation of Micro Food Processing Enterprises) scheme?",
+      "expected_answer": "Not available in this corpus. AIF's Sep 2024 guidelines mention PMFME as a converging scheme but do not carry PMFME's own eligibility criteria. The system should refuse or say the criteria are not in the indexed sources.",
+      "expected_sources": [],
+      "diagnostic_purpose": "Refusal — corpus references PMFME by name but has no PMFME PDFs."
+    },
+    {
+      "question_id": "Q076",
+      "category": "out_of_scope",
+      "question": "What is the interest rate charged on a personal credit card by a scheduled commercial bank?",
+      "expected_answer": "Not available in this corpus, which covers agricultural credit schemes only. The system should refuse to answer.",
+      "expected_sources": [],
+      "diagnostic_purpose": "Refusal — clearly out-of-scope banking product."
+    },
+    {
+      "question_id": "Q077",
+      "category": "out_of_scope",
+      "question": "What is the current weather forecast for Nashik, Maharashtra?",
+      "expected_answer": "Not available in this corpus. The PMFBY WINDS Manual describes hyperlocal weather-data procurement architecture but does not carry real-time or forecast data. The system should refuse.",
+      "expected_sources": [],
+      "diagnostic_purpose": "Refusal — dynamic-data question with corpus adjacency (WINDS)."
+    },
+    {
+      "question_id": "Q078",
+      "category": "out_of_scope",
+      "question": "How can I open a Sukanya Samriddhi Yojana account for my daughter?",
+      "expected_answer": "Not available in this corpus. Sukanya Samriddhi Yojana is a girl-child savings scheme unrelated to the agriculture schemes indexed here. The system should refuse.",
+      "expected_sources": [],
+      "diagnostic_purpose": "Refusal — unrelated government scheme."
+    },
+    {
+      "question_id": "Q079",
+      "category": "malformed_query",
+      "question": "pm kisan me naya registration kaise kare",
+      "expected_answer": "Open the PM-KISAN new-registration page, enter Aadhaar number, mobile number, select state, enter captcha, and submit. Aadhaar is authenticated against UIDAI; registration proceeds only if authentication succeeds. Provide the displayed Aadhaar consent. The workflow has 7 steps.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "PMK_NEW_REGISTRATION",
+          "steps": "1-7"
+        }
+      ],
+      "original_source_qid": "Q003",
+      "diagnostic_purpose": "Malformed-user-query variant of Q003 (simple_procedural). Style: Hindi-heavy transliteration. Tests retrieval robustness to real-user query shapes — colloquial, telegraphic, code-switched — against the same expected sources as the clean baseline."
+    },
+    {
+      "question_id": "Q080",
+      "category": "malformed_query",
+      "question": "pmkisan ekyc process",
+      "expected_answer": "There are three modes. OTP-based: open the PM-KISAN portal e-KYC option, enter Aadhaar number, submit the OTP received on the Aadhaar-linked mobile number. Biometric: visit a CSC/SSK with Aadhaar card and Aadhaar-linked mobile number. Face-authentication: use the PM-KISAN mobile app.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "PMK_EKYC",
+          "steps": "1-5"
+        }
+      ],
+      "original_source_qid": "Q004",
+      "diagnostic_purpose": "Malformed-user-query variant of Q004 (simple_procedural). Style: English telegraphic, no question word. Tests retrieval robustness to real-user query shapes — colloquial, telegraphic, code-switched — against the same expected sources as the clean baseline."
+    },
+    {
+      "question_id": "Q081",
+      "category": "malformed_query",
+      "question": "kcc online apply kaise",
+      "expected_answer": "Visit the website of the bank you wish to apply to, choose Kisan Credit Card, click Apply, fill in the required details and submit. Note the application reference number sent after submission. If eligible, the bank will contact you for further processing within 3-4 working days.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "KCC_WF_01_GENERAL_ONLINE_APPLICATION",
+          "steps": "1-6"
+        }
+      ],
+      "original_source_qid": "Q008",
+      "diagnostic_purpose": "Malformed-user-query variant of Q008 (simple_procedural). Style: code-switched English + Hindi. Tests retrieval robustness to real-user query shapes — colloquial, telegraphic, code-switched — against the same expected sources as the clean baseline."
+    },
+    {
+      "question_id": "Q082",
+      "category": "malformed_query",
+      "question": "pm kisan benefit chodna hai kya karu",
+      "expected_answer": "Enter your registration number, provide the Aadhaar consent, enter the image code, and enter the OTP sent to the Aadhaar-registered mobile number. After surrender no further PM-KISAN cash benefits can be received, and re-registration for PM-KISAN is not allowed. Six steps total.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "PMK_VOLUNTARY_SURRENDER",
+          "steps": "1-6"
+        }
+      ],
+      "original_source_qid": "Q005",
+      "diagnostic_purpose": "Malformed-user-query variant of Q005 (simple_procedural). Style: Hindi-heavy, colloquial. Tests retrieval robustness to real-user query shapes — colloquial, telegraphic, code-switched — against the same expected sources as the clean baseline."
+    },
+    {
+      "question_id": "Q083",
+      "category": "malformed_query",
+      "question": "smam single implement subsidy kaise milegi",
+      "expected_answer": "Register on the DBT Agriculture Mechanization portal with Aadhaar-based e-KYC. Log in and upload basic details (bank, land, documents). Apply for the single implement. Record the unique application ID and PIN. View the approved dealer/manufacturer list. Negotiate price and select a dealer. Purchase the implement (dealer uploads bill, machine/serial details and joint photographs). Undergo post-sale physical verification by a government officer. After successful verification, the competent authority approves the subsidy and generates the payment file. Nine steps.",
+      "expected_sources": [
+        {
+          "type": "workflow",
+          "workflow_id": "SMAM_WF_01_SINGLE_IMPLEMENT_SUBSIDY",
+          "steps": "1-9"
+        }
+      ],
+      "original_source_qid": "Q012",
+      "diagnostic_purpose": "Malformed-user-query variant of Q012 (simple_procedural). Style: code-switched, missing scheme spelling. Tests retrieval robustness to real-user query shapes — colloquial, telegraphic, code-switched — against the same expected sources as the clean baseline."
+    },
+    {
+      "question_id": "Q084",
+      "category": "malformed_query",
+      "question": "pmfby kharif farmer premium kitna",
+      "expected_answer": "2.0% of Sum Insured, or the Actuarial Premium Rate, whichever is less.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "26-27",
+          "section": "13.1 Table 1"
+        }
+      ],
+      "original_source_qid": "Q013",
+      "diagnostic_purpose": "Malformed-user-query variant of Q013 (simple_factual). Style: code-switched telegraphic, no question word. Tests retrieval robustness to real-user query shapes — colloquial, telegraphic, code-switched — against the same expected sources as the clean baseline."
+    },
+    {
+      "question_id": "Q085",
+      "category": "malformed_query",
+      "question": "pmfby hailstorm loss reporting time limit",
+      "expected_answer": "Within 72 hours from the occurrence of the peril. Intimation can be through the Crop Insurance App, the centralised toll-free number, the concerned Insurance Company's toll-free number, or the concerned bank/agriculture department/district officials.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "81",
+          "section": "Table 10 (Para 21.5.10)"
+        }
+      ],
+      "original_source_qid": "Q018",
+      "diagnostic_purpose": "Malformed-user-query variant of Q018 (simple_factual). Style: English telegraphic keyword-style. Tests retrieval robustness to real-user query shapes — colloquial, telegraphic, code-switched — against the same expected sources as the clean baseline."
+    },
+    {
+      "question_id": "Q086",
+      "category": "malformed_query",
+      "question": "miss interest subvention rate 2025 26",
+      "expected_answer": "1.5% per annum, provided upfront to lending institutions on short-term loans up to Rs. 3 lakh per borrower per annum for agriculture and allied activities disbursed through KCC.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "MISS_guidelines_25-26_revised.pdf",
+          "pages": "1"
+        }
+      ],
+      "original_source_qid": "Q017",
+      "diagnostic_purpose": "Malformed-user-query variant of Q017 (simple_factual). Style: pure English telegraphic, keyword-only. Tests retrieval robustness to real-user query shapes — colloquial, telegraphic, code-switched — against the same expected sources as the clean baseline."
+    },
+    {
+      "question_id": "Q087",
+      "category": "malformed_query",
+      "question": "pmfby olay crop damage claim procedure kitne din",
+      "expected_answer": "Hailstorm is treated as a localised calamity. The farmer must intimate the loss within 72 hours through the Crop Insurance App, centralised toll-free number, insurer's toll-free number, or via bank/agriculture department/district officials. The Insurance Company appoints a loss assessor; a joint survey follows. For localised calamities the loss is assessed at the individual insured farm. Claim settlement follows the timelines in Table 10 (Section 21.5). If claims are admissible and not paid within the stipulated cut-off date, penal interest at 12% per annum is payable on pending claims beyond 30 days of uploading the actual-yield data on the portal (subject to release of state subsidy).",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "Revamped Operational Guidelines_17th August 2020.pdf",
+          "pages": "15, 42, 81",
+          "section": "5.3 + Section 15 + Table 10"
+        }
+      ],
+      "original_source_qid": "Q031",
+      "diagnostic_purpose": "Malformed-user-query variant of Q031 (multi_hop_scheme). Style: heavy code-switch, colloquial 'olay' for hailstorm. Tests retrieval robustness to real-user query shapes — colloquial, telegraphic, code-switched — against the same expected sources as the clean baseline."
+    },
+    {
+      "question_id": "Q088",
+      "category": "malformed_query",
+      "question": "kcc collateral free limit rbi 2026 vs 2017 farak",
+      "expected_answer": "The 2026 Directions extend the KCC composite facility tenure to six years (up from five years in the 2017 Master Circular) and raise the collateral-free/margin-waiver ceiling for agricultural loans (including allied activities) to Rs. 2 lakh per borrower (up from Rs. 1 lakh under the 2017 MC's hypothecation-of-crops waiver). The tie-up-based collateral waiver ceiling of Rs. 3 lakh (with recovery arrangement) is retained.",
+      "expected_sources": [
+        {
+          "type": "pdf",
+          "document": "RBI_KCC_Directions_2026_Commercial_Banks.pdf",
+          "pages": "3-4, 9"
+        },
+        {
+          "type": "pdf",
+          "document": "RBI_KCC_Master_Circular_2017.pdf.pdf",
+          "pages": "5, 9"
+        }
+      ],
+      "original_source_qid": "Q032",
+      "diagnostic_purpose": "Malformed-user-query variant of Q032 (multi_hop_scheme). Style: keyword-style comparison query, Hindi 'farak' for difference. Tests retrieval robustness to real-user query shapes — colloquial, telegraphic, code-switched — against the same expected sources as the clean baseline."
+    }
+  ]
+}

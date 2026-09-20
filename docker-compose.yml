@@ -1,0 +1,53 @@
+# Local convenience for running the same image you deploy to Fly.io,
+# on your laptop, without paying cloud money to smoke-test a change.
+#
+# What it does:
+#   * Builds the image from the Dockerfile in the current directory.
+#   * Bind-mounts your local ./data/chroma_prod as READ-ONLY into
+#     /data/chroma_prod — the container reads the same prebuilt index
+#     you already have.
+#   * Uses a NAMED VOLUME for /data (which is where the SQLite chat
+#     DB gets written) so restarts preserve chat history without
+#     touching your host filesystem.
+#   * Loads secrets from your local .env (never committed).
+#
+# Run:
+#   docker compose up --build
+#
+# Then open http://127.0.0.1:8080
+
+services:
+  agri-rag:
+    build: .
+    image: agri-rag:local
+    ports:
+      # Streamlit is public; FastAPI stays private inside the container.
+      - "8080:8080"
+    env_file:
+      # Local secrets (GROQ_API_KEY etc). Never committed.
+      - .env
+    environment:
+      # Point the app at the volume-mounted paths. These override the
+      # defaults baked into src/config.py.
+      CHROMA_PERSIST_DIR: /data/chroma_prod
+      CHROMA_COLLECTION_NAME: agri_schemes_prod
+      AGRI_DB_PATH: /data/agri_rag.db
+      AGRI_API_URL: http://127.0.0.1:8000
+    volumes:
+      # Your local Chroma prod index, mounted read-only. The container
+      # NEVER writes here — this file layout is a build artefact
+      # produced by scripts/build_prod_collection.py.
+      - ./data/chroma_prod:/data/chroma_prod:ro
+      # Named volume for SQLite. Survives `docker compose down` unless
+      # you explicitly pass `-v` (which removes named volumes too).
+      - agri_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8080/_stcore/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  agri_data:

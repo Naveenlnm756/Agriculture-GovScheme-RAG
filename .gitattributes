@@ -1,0 +1,29 @@
+# Default: let git decide, but normalize text on commit.
+* text=auto
+
+# --- Shell scripts MUST stay LF ---
+# start.sh + docker-entrypoint.sh run inside a Linux container. If git
+# checks them out with CRLF on Windows and they get copied into the
+# image via COPY, the Linux shebang line becomes "#!/usr/bin/env bash\r"
+# and the container fails to start with `bad interpreter`.
+*.sh          text eol=lf
+Dockerfile    text eol=lf
+docker-compose.yml text eol=lf
+
+# --- Python / config as plain text with normalized line endings ---
+*.py          text
+*.toml        text
+*.yaml        text
+*.yml         text
+*.json        text
+*.md          text
+*.txt         text
+
+# --- Binaries never text-diffed ---
+*.pdf         binary
+*.png         binary
+*.jpg         binary
+*.jpeg        binary
+*.bin         binary
+*.sqlite3     binary
+*.db          binary

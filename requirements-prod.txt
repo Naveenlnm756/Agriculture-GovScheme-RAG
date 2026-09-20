@@ -1,0 +1,43 @@
+# Runtime-only dependencies for the deployed Agri Schemes RAG service.
+#
+# This file is a strict SUBSET of requirements.txt. It excludes:
+#   * pypdf / ocrmypdf / pikepdf — used only at ingest time to build
+#     the corpus. The deployed app reads a prebuilt Chroma collection
+#     and never opens a PDF.
+#   * ragas, langchain-ollama, langchain-mistralai — used only by the
+#     eval harness (eval/run_eval.py). Not touched by /query.
+#
+# Result: ~2 GB Docker image instead of ~3.5 GB (removes torch's OCR
+# and the LangChain judge stack), and no Tesseract system dependency.
+#
+# Version pins mirror requirements.txt verbatim so `pip install -r
+# requirements.txt` locally and `pip install -r requirements-prod.txt`
+# in Docker resolve to the SAME versions of every shared dep. Drift
+# between the two is a class of bug we do not want.
+
+# --- API layer ---
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+# starlette pin: fastapi 0.115 requires <0.39; streamlit 1.64 asks for
+# >=0.46 as a warning-only dep (its own server is tornado-based, so
+# starlette 0.38.6 works for both at runtime). Matches requirements.txt.
+starlette<0.39
+
+# --- Frontend ---
+streamlit>=1.30,<2
+
+# --- HTTP client (Streamlit talks to FastAPI over the loopback iface) ---
+requests>=2.31,<3
+
+# --- Config / data models ---
+pydantic==2.9.2
+pydantic-settings==2.5.2
+python-dotenv==1.0.1
+
+# --- Retrieval ---
+chromadb==0.5.5
+sentence-transformers==3.0.1
+rank-bm25==0.2.2
+
+# --- LLM client ---
+groq==1.7.0
