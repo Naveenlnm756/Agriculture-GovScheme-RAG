@@ -52,15 +52,19 @@ fi
 # A new persistent volume (new Railway/Fly account) mounts empty. The
 # retriever calls get_collection() which fails hard if the collection
 # doesn't exist. So on first boot, copy the baked-in seed from the
-# image to the volume. Idempotent: skipped once /data/chroma_prod
-# exists, so subsequent boots are untouched and re-ingestions on the
-# volume are not clobbered.
+# image to the volume. Idempotent: skipped once the Chroma store looks
+# populated (sqlite file present), so subsequent boots are untouched.
+#
+# We check for the sqlite file specifically (not just the dir) because
+# a previous failed boot could have created an empty /data/chroma_prod
+# — and we must still seed in that case.
 SEED_DIR="/app/data/chroma_prod_seed"
-if [ ! -d "$DATA_DIR/chroma_prod" ] && [ -d "$SEED_DIR" ]; then
+if [ ! -f "$DATA_DIR/chroma_prod/chroma.sqlite3" ] && [ -d "$SEED_DIR" ]; then
     echo "[entrypoint] seeding Chroma index onto empty volume…"
+    rm -rf "$DATA_DIR/chroma_prod" 2>/dev/null || true
     cp -r "$SEED_DIR" "$DATA_DIR/chroma_prod"
     chown -R "$APP_USER":"$APP_USER" "$DATA_DIR/chroma_prod" 2>/dev/null || true
-    echo "[entrypoint] seed complete"
+    echo "[entrypoint] seed complete — sqlite at $DATA_DIR/chroma_prod/chroma.sqlite3"
 fi
 
 # --- Make Chroma readable ---------------------------------------------
