@@ -83,6 +83,13 @@ COPY app.py start.sh docker-entrypoint.sh ./
 # file at /app/data/scheme_eligibility.json.
 COPY data/scheme_eligibility.json /app/data/scheme_eligibility.json
 
+# Seed copy of the production Chroma index. The RUNTIME path is /data on
+# the persistent volume, but a fresh volume (new Railway/Fly account) is
+# empty on first mount. docker-entrypoint.sh copies this seed to
+# /data/chroma_prod on first boot ONLY (idempotent — skipped if the
+# volume already has the collection).
+COPY data/chroma_prod /app/data/chroma_prod_seed
+
 # The application also needs data/raw and data/processed as PATHS to
 # exist (config.py Field defaults); empty stubs are fine because the
 # runtime never opens them.

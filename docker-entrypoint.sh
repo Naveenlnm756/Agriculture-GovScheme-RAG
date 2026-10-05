@@ -48,6 +48,21 @@ if [ -n "${AGRI_DB_PATH:-}" ]; then
     chown "$APP_USER":"$APP_USER" "$DB_PARENT" 2>/dev/null || true
 fi
 
+# --- Seed Chroma onto a fresh volume ----------------------------------
+# A new persistent volume (new Railway/Fly account) mounts empty. The
+# retriever calls get_collection() which fails hard if the collection
+# doesn't exist. So on first boot, copy the baked-in seed from the
+# image to the volume. Idempotent: skipped once /data/chroma_prod
+# exists, so subsequent boots are untouched and re-ingestions on the
+# volume are not clobbered.
+SEED_DIR="/app/data/chroma_prod_seed"
+if [ ! -d "$DATA_DIR/chroma_prod" ] && [ -d "$SEED_DIR" ]; then
+    echo "[entrypoint] seeding Chroma index onto empty volume…"
+    cp -r "$SEED_DIR" "$DATA_DIR/chroma_prod"
+    chown -R "$APP_USER":"$APP_USER" "$DATA_DIR/chroma_prod" 2>/dev/null || true
+    echo "[entrypoint] seed complete"
+fi
+
 # --- Make Chroma readable ---------------------------------------------
 # Chroma should be READABLE by app but never WRITTEN — we opened it via
 # `client.get_collection` (not get_or_create), so the app can't modify

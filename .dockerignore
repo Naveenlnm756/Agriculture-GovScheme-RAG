@@ -26,6 +26,12 @@ data/
 # explicitly. Without this negation .dockerignore would still exclude
 # it from the build context.
 !data/scheme_eligibility.json
+# Exception: ship the production Chroma index inside the image so a
+# fresh persistent volume (e.g. a new Railway/Fly account) can be seeded
+# on first boot by docker-entrypoint.sh. Without this, the app fails
+# with "Collection agri_schemes_prod does not exist" on first run.
+!data/chroma_prod
+!data/chroma_prod/**
 
 # --- Eval / dev tooling not needed in production ---
 eval/
