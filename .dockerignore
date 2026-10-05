@@ -17,14 +17,17 @@ __pycache__/
 .env.*.local
 
 # --- Data ---
-# The heavy stuff (chroma indexes, raw PDFs, backups, vision cache,
-# SQLite DB) is EITHER on the Fly persistent volume OR local-only.
-# Never ship it inside the image.
-data/
+# The heavy stuff (raw PDFs, backups, vision cache, SQLite DB) is
+# EITHER on the persistent volume OR local-only. Never ship those
+# inside the image.
+#
+# Note: we exclude `data/*` (contents) rather than `data/` (the dir)
+# because Docker won't descend into an excluded directory, which would
+# make the `!...` re-include lines below silently useless.
+data/*
 # Exception: scheme_eligibility.json is a reviewed code artefact that
 # scheme_discovery.py needs at runtime; the Dockerfile COPYs it back in
-# explicitly. Without this negation .dockerignore would still exclude
-# it from the build context.
+# explicitly.
 !data/scheme_eligibility.json
 # Exception: ship the production Chroma index inside the image so a
 # fresh persistent volume (e.g. a new Railway/Fly account) can be seeded
